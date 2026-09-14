@@ -164,7 +164,79 @@
     table.xl { font-size:11.5px; } table.xl col.xl-rn { width:20px; }
     table.xl th, table.xl td { padding:2px 3px; } table.xl .calc { font-size:11px; }
   }
-  @media print { .xl-wrap { break-inside:avoid; } }
+  details.xl-wrap > summary { cursor:pointer; list-style:none; display:flex; align-items:baseline; gap:4px 10px; flex-wrap:wrap; user-select:none; }
+  details.xl-wrap > summary::-webkit-details-marker { display:none; }
+  details.xl-wrap > summary > span:first-child::before { content:"▶"; display:inline-block; font-size:10px; color:var(--muted); margin-right:6px; transition:transform .15s; }
+  details.xl-wrap[open] > summary > span:first-child::before { transform:rotate(90deg); }
+  details.xl-wrap > summary:hover { background:#f8fafc; }
+  details.xl-wrap[open] > summary { margin-bottom:4px; }
+  .xl-sum { font-weight:500; font-size:12px; color:var(--muted); margin-left:auto; }
+  .xl-tools { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .xl-tools button { font-size:12px; padding:4px 10px; }
+  @media print { .xl-wrap { break-inside:avoid; } .xl-tools { display:none; } }
+
+  /* PDF-Auswahlfenster */
+  .dlg { position:fixed; inset:0; z-index:130; background:#0006; display:flex; align-items:center; justify-content:center; padding:16px; }
+  .dlg[hidden], .chk[hidden] { display:none; }
+  .dlg-box { background:#fff; border-radius:12px; padding:18px; width:min(440px, 100%); box-shadow:0 20px 50px #0005; max-height:90vh; overflow:auto; }
+  .dlg-box h3 { margin:0 0 6px; }
+  label.chk { display:flex; gap:8px; align-items:center; font-size:15px; color:var(--ink); padding:5px 0; margin:0; cursor:pointer; }
+  label.chk input { width:auto; margin:0; }
+  .dlg-btns { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+
+  /* Kompakter, farbiger PDF-Ausdruck */
+  @media print {
+    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    body.pdf-bw { filter:grayscale(1); }
+    .noprint, .dlg, #secNote, .note, .sub, #btLegend { display:none !important; }
+    @page { size:A4; margin:9mm; }
+    body { font-size:8.5pt; line-height:1.3; }
+    h1 { font-size:14pt; margin:0 0 2mm; }
+    h2 { font-size:10.5pt; margin:0 0 1.5mm; }
+    .card { padding:2.5mm 3mm; margin-bottom:2.5mm; border-radius:2mm; }
+    .big { font-size:18pt; } .big small { font-size:8pt; }
+    .result { gap:3mm; }
+    .badge { font-size:7.5pt; padding:0 5px; margin:1px 3px 1px 0; }
+    .kv { font-size:8.5pt; }
+    label { font-size:7.5pt; margin-bottom:0; }
+    select, input { font-size:8.5pt; }
+    table.lay th, table.lay td { padding:1px 3px; font-size:8pt; }
+    table.xl { font-size:7.5pt; } table.xl th, table.xl td { padding:1px 3px; } table.xl .calc { font-size:7pt; }
+    .xl-wrap { margin-top:2mm; } .xl-title { font-size:9pt; }
+    #chart, #gchart, #schart { max-height:45mm; }
+    .stack { height:8mm; margin-top:2mm; }
+    .scale { margin-bottom:12mm !important; }
+    .srow { padding:1px 0; font-size:7.5pt; gap:6px; }
+    .legend { font-size:7pt; margin-top:1mm; }
+    #rwBox > summary .muted, #rwBox > summary .rw-sum::after { display:none; }
+    #secBauteil .row { gap:2mm; }
+    table.cmp { font-size:7.5pt; } table.cmp th, table.cmp td { padding:1px 4px; }
+    footer { font-size:7pt; padding-top:0 !important; }
+    /* echte Tabellen statt Handy-Karten (Container-Abfragen im Druck aus) */
+    main { container-type:normal !important; }
+    /* keine großen Lücken: Blöcke dürfen umbrechen, nur Zeilen und Diagramme nicht */
+    .card, .xl-wrap { break-inside:auto !important; }
+    table.xl tr, table.lay tr, table.cmp tr, .srow, .result, .tbl svg, .scale { break-inside:avoid; }
+    /* kleine Datei: nur eine Schriftfamilie einbetten */
+    body, body *, table.xl .calc { font-family:Arial, Helvetica, sans-serif !important; }
+    #rwBox > summary .rw-sum { font-size:0; }
+    #rwBox > summary .rw-sum::before { content:"Rechenweg"; font-size:10.5pt; }
+    .tbl svg { max-height:42mm; }
+    /* Schichttabelle: feste Spaltenbreiten, Eingabefelder füllen nur ihre Zelle */
+    table.lay { table-layout:fixed; }
+    table.lay tr > :nth-child(1) { width:4%; }  table.lay tr > :nth-child(2) { width:34%; }
+    table.lay tr > :nth-child(3) { width:10%; } table.lay tr > :nth-child(4) { width:11%; }
+    table.lay tr > :nth-child(5) { width:9%; }  table.lay tr > :nth-child(6) { width:8%; }
+    table.lay tr > :nth-child(7) { width:12%; } table.lay tr > :nth-child(8) { width:12%; }
+    td input.small, td input.small.mu, td input.small.wood { width:100% !important; font-size:8pt; padding:0; text-align:right; }
+    table.lay .matbtn { font-size:8pt; }
+    /* Einordnung: Spalten für Papier, kein Umbruch mitten im Wort */
+    .srow { grid-template-columns:10px minmax(0,1.7fr) 55px 95px minmax(0,1.1fr) minmax(0,1.2fr); }
+    .srow > span, .src { overflow-wrap:break-word; hyphens:auto; }
+    /* Überschriften bei ihrem Inhalt halten, Diagramme nie teilen */
+    h2, .xl-title { break-after:avoid; }
+    .tbl:has(> svg), .legend { break-inside:avoid; }   /* nur Diagramme zusammenhalten, Tabellen dürfen umbrechen */
+  }
 
   /* Werkzeugleiste, Hinweis-Toast, Vergleich */
   .toolbar { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-left:auto; }
@@ -324,7 +396,7 @@
     </div>
   </div>
 
-  <div class="card bt-card">
+  <div class="card bt-card" id="secBauteil">
   <div>
     <div id="drawing"></div>
     <div class="muted cap">👆 Bauteil in der Zeichnung anklicken <i class="info" data-help="drawing">i</i></div>
@@ -349,7 +421,7 @@
   </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="secLayers">
     <div class="tbl">
       <table class="lay">
         <thead>
@@ -371,7 +443,7 @@
     <div style="margin-top:12px"><button class="primary" id="add">+ Schicht hinzufügen</button></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="secResult">
     <div class="result">
       <div class="big" id="u" data-help="u">–</div>
       <div>
@@ -394,14 +466,14 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="secRw">
     <details id="rwBox">
       <summary><span class="rw-sum">🧮 Rechenweg anzeigen</span> <span class="muted">– alle Schritte mit eingesetzten Zahlen</span> <i class="info" data-help="rechenweg">i</i></summary>
       <div id="rw"></div>
     </details>
   </div>
 
-  <div class="card">
+  <div class="card" id="secStd">
     <h2>Einordnung: Baustandards &amp; Förderung <i class="info" data-help="std">i</i></h2>
     <div id="stdBody"></div>
     <div class="note"><b>Quellen:</b>
@@ -413,7 +485,7 @@
       Förderbedingungen ändern sich häufig – vor einem Antrag die aktuelle Fassung bei BAFA/KfW prüfen.</div>
   </div>
 
-  <div class="card">
+  <div class="card" id="secClima">
     <h2>Klima, Temperaturverlauf &amp; Taupunkt <i class="info" data-help="taupunkt">i</i></h2>
     <div class="row">
       <div><label for="ti"><span id="lblTi">Innentemperatur θ<sub>i</sub></span> [°C] <i class="info" data-help="ti">i</i></label><input id="ti" type="number" step="0.5" data-help="ti"></div>
@@ -432,7 +504,7 @@
     <div class="legend"><span style="--c:#b91c1c">Temperatur</span><span class="dash" style="--c:#2563eb">Taupunkt der warmen Seite</span><span style="--c:#2563eb">Taupunktebene</span><i class="info" data-help="tempchart">i</i></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="secGlaser">
     <h2>Tauwasser nach Glaser <i class="info" data-help="glaser">i</i></h2>
     <div class="row" style="align-items:end">
       <div style="flex:0 1 220px"><label for="days">Dauer Tauperiode [Tage] <i class="info" data-help="days">i</i></label><input id="days" type="number" min="1" step="1" data-help="days"></div>
@@ -458,7 +530,7 @@
     <div class="note">Periodisch eingeschwungener Zustand nach dem Matrixverfahren der DIN EN ISO 13786 (Periode 24 h, Innenluft konstant), im Gefach ohne Holz. Das ist kein Nachweis nach DIN 4108-2 (Sonneneintragskennwert) – dort zählen vor allem Fensterflächen und Verschattung.</div>
   </div>
 
-  <div class="card">
+  <div class="card" id="secNote">
     <div class="note" style="margin-top:0">λ- und μ-Werte sind typische Bemessungswerte (Richtwerte nach DIN 4108-4 / DIN EN ISO 10456) und können in der Tabelle überschrieben werden. Für Nachweise die Herstellerangaben verwenden. Hinterlüftete Schichten (z. B. Dachziegel, Vorhangfassade) nicht eintragen – dafür R<sub>se</sub> = R<sub>si</sub> setzen.</div>
   </div>
   <footer style="text-align:center;color:var(--muted);font-size:13px;padding:8px 0 0">Made by Florian Lind and Claude</footer>
@@ -481,6 +553,22 @@
 </div>
 <div id="tip" hidden></div>
 <div id="toast" hidden></div>
+<div id="pdfDlg" class="dlg" hidden>
+  <div class="dlg-box" role="dialog" aria-label="PDF erstellen">
+    <h3>🖨️ PDF erstellen</h3>
+    <p class="muted" style="margin:0 0 8px">Wähle, was ins PDF soll. Danach im Druckdialog „Als PDF speichern“ wählen.</p>
+    <label class="chk"><input type="checkbox" data-sec="secBauteil,secLayers,secResult" checked> Aufbau &amp; U-Wert</label>
+    <label class="chk"><input type="checkbox" data-sec="secStd" checked> Einordnung: Baustandards &amp; Förderung</label>
+    <label class="chk"><input type="checkbox" data-sec="secClima" checked> Temperaturverlauf &amp; Taupunkt</label>
+    <label class="chk"><input type="checkbox" data-sec="secGlaser"> Tauwasser nach Glaser</label>
+    <label class="chk"><input type="checkbox" data-sec="sumCard"> Sommerlicher Wärmeschutz</label>
+    <label class="chk"><input type="checkbox" data-sec="cmpCard" checked> Variantenvergleich</label>
+    <label class="chk"><input type="checkbox" data-sec="secRw" checked> Rechenweg <span class="muted">(nur aufgeklappte Blätter komplett)</span></label>
+    <hr style="border:0;border-top:1px solid var(--line);margin:8px 0">
+    <label class="chk"><input type="checkbox" id="pdfColor" checked> In Farbe</label>
+    <div class="dlg-btns"><button type="button" id="pdfCancel">Abbrechen</button><button type="button" id="pdfGo" class="primary">PDF erstellen</button></div>
+  </div>
+</div>
 
 <script>
 // ================= Baustoffe =================
@@ -813,7 +901,7 @@ Object.assign(HELP, {
   tools: { t:"Link, Vergleich &amp; PDF", s:"Link kopieren = Aufbau teilen · Vergleichen = zwei Varianten nebeneinander · PDF = Ausdruck mit Rechenweg.", l:`
     <ul><li><b>🔗 Link kopieren:</b> Der ganze Aufbau (Bauteil, Schichten, Dicken, Holzanteil, Klima) steckt in einem kurzen Link. Wer ihn öffnet, sieht genau deinen Aufbau. Die Adresszeile aktualisiert sich außerdem laufend – ein Lesezeichen merkt sich den Stand.</li>
         <li><b>⚖️ Vergleichen:</b> Merkt den aktuellen Aufbau als Variante A. Danach änderst du z. B. den Dämmstoff oder die Dicke – die Tabelle zeigt A und B nebeneinander, das Bessere grün.</li>
-        <li><b>🖨️ PDF:</b> Öffnet den Druckdialog. Dort „Als PDF speichern“ wählen. Der Rechenweg wird automatisch mitgedruckt, Bedienelemente werden ausgeblendet.</li></ul>` },
+        <li><b>🖨️ PDF:</b> Du wählst per Häkchen, welche Bereiche ins PDF sollen (Aufbau, Einordnung, Taupunkt, Glaser, Sommer, Vergleich, Rechenweg) – farbig oder schwarz-weiß. Vom Rechenweg werden nur die aufgeklappten Blätter komplett gedruckt, zugeklappte nur mit ihrer Kurzinfo. Im Druckdialog dann „Als PDF speichern“ wählen.</li></ul>` },
   vergleich: { t:"Variantenvergleich", s:"Variante A (gemerkt) und B (aktuell) nebeneinander – das Bessere ist grün markiert.", l:`
     <p>So vergleichst du zwei Dämmungen:</p>
     <ol><li>Aufbau mit Dämmung 1 einstellen und <b>⚖️ Vergleichen</b> klicken → das ist Variante A.</li><li>Dämmstoff oder Dicke ändern → das ist Variante B.</li><li>Die Tabelle zeigt U-Wert, Dicke, Niveau, Tauwasser, Schimmel-Check, Phasenverschiebung und TAV beider Varianten.</li></ol>
@@ -883,6 +971,8 @@ let CALC = {};            // Zwischenergebnisse für Rechenweg, Vergleich und Ex
 let CLIM = null, GL = null, SUM = null;
 let READY = false;        // erst nach dem Start die Adresszeile aktualisieren
 let VAR_A = null;         // gemerkte Variante A für den Vergleich
+const RW_CLOSED = new Set(["Blatt 2a", "Blatt 2b", "Blatt 3", "Blatt 4"]);   // zugeklappte Rechenweg-Blätter
+let printing = false;
 
 document.addEventListener("mouseup", () => { if (!dragRow) [...layers.rows].forEach(r => r.draggable = false); });
 
@@ -1391,7 +1481,10 @@ function renderRechenweg() {
   const sheet = (title, col, head, rows, opt = {}) => {
     const cls = opt.cls || head.map(() => "");
     const tint = `background:color-mix(in srgb, ${col} 16%, white)`;
-    let t = `<div class="xl-wrap"><div class="xl-title" style="border-color:${col}">${title}</div><table class="xl"><colgroup><col class="xl-rn">` +
+    const key = title.split(" – ")[0];   // „Blatt 1“, „Blatt 2a“ … – merkt sich den Klappzustand
+    let t = `<details class="xl-wrap" data-k="${key}"${RW_CLOSED.has(key) ? "" : " open"}>` +
+      `<summary class="xl-title" style="border-color:${col}"><span>${title}</span>${opt.sum ? `<span class="xl-sum">${opt.sum}</span>` : ""}</summary>` +
+      `<table class="xl"><colgroup><col class="xl-rn">` +
       (opt.w || head.map(() => "")).map(w => `<col${w ? ` style="width:${w}"` : ""}>`).join("") + `</colgroup>`;
     t += `<tr class="xl-let"><th></th>${head.map((_, i) => `<th>${LET[i]}</th>`).join("")}</tr>`;
     t += `<tr class="xl-head"><th>1</th>${head.map((h, i) => `<th class="${cls[i]}" style="${tint}">${h}</th>`).join("")}</tr>`;
@@ -1400,12 +1493,12 @@ function renderRechenweg() {
       t += `<tr class="${Array.isArray(r) ? "" : r.cls || ""}"><th>${j + 2}</th>` +
         cells.map((v, i) => v && typeof v === "object" ? `<td class="${cls[i]}" style="${v.s || ""}">${v.v}</td>` : `<td class="${cls[i]}">${v}</td>`).join("") + `</tr>`;
     });
-    return t + `</table>${opt.note ? `<div class="xl-note">${opt.note}</div>` : ""}</div>`;
+    return t + `</table>${opt.note ? `<div class="xl-note">${opt.note}</div>` : ""}</details>`;
   };
   // Ergebniszeile: Größe | Formel + eingesetzte Zahlen | Ergebnis | Einheit – st = "ok" | "bad" | "warn" färbt das Ergebnis
   const res = (name, formula, calc, val, unit, st = "") => ({ c: [name, `${formula}<span class="calc">${calc}</span>`, val, unit], cls: `res ${st}` });
   const okbad = cond => cond ? "ok" : "bad";
-  let h = "";
+  let h = `<div class="xl-tools"><button type="button" data-xl="open">▾ Alle aufklappen</button><button type="button" data-xl="close">▸ Alle einklappen</button></div>`;
 
   // Bewertung des U-Werts (GEG bzw. Kühlraum-Richtwert) – für Blatt 1 und 5
   const bt = BT()[$("bauteil").value];
@@ -1432,6 +1525,7 @@ function renderRechenweg() {
                 "", "", f3(C.u), "W/(m²K)"], cls: `res ${uSt}` });
   h += sheet("Blatt 1 – Wärmeschutz (von innen nach außen)", "#d97706", ["Schicht / Übergang", "d [m]", "λ [W/(mK)]", "R [m²K/W]", "θ [°C]"], r1, {
     cls: ["", "n", "n", "n", "n"], w: ["40%", "14%", "15%", "16%", "15%"],
+    sum: `R<sub>T</sub> = ${f3(C.rt)} · U = ${f3(C.u)} W/(m²K)`,
     note: `D = B / C (Luftschichten: Tabellenwert DIN EN ISO 6946) · D-Summe = R<sub>T</sub> · U = 1 / R<sub>T</sub>` +
           (c ? ` · E = θ der Zeile darüber − q · D, mit q = ${f3(C.uG)} · (${f1(c.ti)} − ${br(c.te)}) = ${f2(c.q)} W/m² · Farbe: blau = kalt, rot = warm` : "") });
 
@@ -1440,12 +1534,12 @@ function renderRechenweg() {
     const I = C.inh;
     h += sheet("Blatt 2a – Inhomogene Schichten (Holzanteil)", "#8b5a2b", ["Schicht", "Holz f", "R Gefach", "R Holz", "R''"],
       I.inh.map(l => [sw(l.name) + l.name, fx(l.f, 3), f3(l.R), f3(l.Rw), f3(l.Req)]),
-      { cls: ["", "n", "n", "n", "n"], w: ["36%", "14%", "16%", "16%", "18%"],
+      { cls: ["", "n", "n", "n", "n"], w: ["36%", "14%", "16%", "16%", "18%"], sum: `${I.inh.length} Schicht(en) mit Holz`,
         note: "D = d / 0,13 (Nadelholz) · E = 1 / ((1 − B) / C + B / D) – flächengewichteter Widerstand der Schicht" });
     const rows = I.sections.map(sec => [sec.wood.map(w => w ? "🪵 Holz" : "Gefach").join(" / "), fx(sec.fa, 3), f3(sec.R), fx(sec.fa / sec.R, 5)]);
     rows.push({ c: ["Summe", fx(I.sections.reduce((a, x) => a + x.fa, 0), 3), "", fx(1 / I.rUp, 5)], cls: "sum" });
     h += sheet("Blatt 2b – Abschnitte für den oberen Grenzwert", "#8b5a2b", ["Abschnitt", "Flächenanteil f<sub>j</sub>", "R<sub>T,j</sub> [m²K/W]", "f<sub>j</sub> / R<sub>T,j</sub>"], rows,
-      { cls: ["", "n", "n", "n"], w: ["34%", "22%", "22%", "22%"], note: "C = R<sub>si</sub> + Σ R des Abschnitts + R<sub>se</sub> · D = B / C · R'<sub>T</sub> = 1 / Summe D" });
+      { cls: ["", "n", "n", "n"], w: ["34%", "22%", "22%", "22%"], sum: `R'<sub>T</sub> = ${f3(I.rUp)} · R''<sub>T</sub> = ${f3(I.rLo)}`, note: "C = R<sub>si</sub> + Σ R des Abschnitts + R<sub>se</sub> · D = B / C · R'<sub>T</sub> = 1 / Summe D" });
   }
 
   // ---------- Blatt 3: Feuchte / Glaser ----------
@@ -1467,6 +1561,7 @@ function renderRechenweg() {
     r3.push({ c: [`Summe (p<sub>e</sub> = ${fmt(c.pe, 0)} Pa)`, "", "", fmtSd(g.S), "", ""], cls: "sum" });
     h += sheet("Blatt 3 – Feuchteschutz (Glaser)", "#2563eb", ["Schicht", "μ [–]", "s<sub>d</sub> [m]", "Σ s<sub>d</sub> [m]", "θ [°C]", "p<sub>s</sub> [Pa]"], r3, {
       cls: ["", "n", "n", "n", "n", "n"], w: ["34%", "12%", "13%", "14%", "12%", "15%"],
+      sum: g.planes.length ? `💧 M<sub>T</sub> = ${fmt(g.MT, 3)} kg/m²` : "kein Tauwasser",
       note: "C = B · d · D = fortlaufende Summe von C · E aus Blatt 1 · F = Sättigungsdampfdruck bei E (Magnus-Formel) · gelb = Tauwasserebene, grau = nicht angesetzt" });
   }
 
@@ -1474,7 +1569,7 @@ function renderRechenweg() {
   if (s && s.layers.length) {
     h += sheet("Blatt 4 – Sommerlicher Wärmeschutz: Eindringtiefe je Schicht", "#dc2626", ["Schicht", "ρ [kg/m³]", "c [J/(kgK)]", "δ [cm]", "ξ = d / δ"],
       s.layers.map(x => [sw(x.name) + x.name, fx(x.rho, 0), fx(x.cap, 0), fx(x.delta * 100, 1), fx(x.xi, 3)]),
-      { cls: ["", "n", "n", "n", "n"], w: ["36%", "15%", "16%", "15%", "18%"], note: "D = √(λ · T / (π · B · C)) mit T = 86 400 s (24 h) · E = d / D – je größer ξ, desto stärker gedämpft und verzögert" });
+      { cls: ["", "n", "n", "n", "n"], w: ["36%", "15%", "16%", "15%", "18%"], sum: `η = ${f1(s.eta)} h · TAV = ${fx(s.tav, 3)}`, note: "D = √(λ · T / (π · B · C)) mit T = 86 400 s (24 h) · E = d / D – je größer ξ, desto stärker gedämpft und verzögert" });
   }
 
   // ---------- Blatt 5: Ergebnisse ----------
@@ -1519,7 +1614,8 @@ function renderRechenweg() {
     R.push(res("Zeitverschiebung Δt", "(arg Z<sub>12</sub> − π) · 24 h / 2π", "Luft → Luft (DIN EN ISO 13786)", f1(s.tshift), "h"));
   }
   h += sheet("Blatt 5 – Ergebnisse mit Formel und eingesetzten Zahlen", "#16a34a", ["Größe", "Formel / eingesetzt", "Ergebnis", "Einheit"], R,
-    { cls: ["", "", "n", ""], w: ["26%", "44%", "16%", "14%"], note: "Ergebnisfarbe: grün = erfüllt, rot = nicht erfüllt, gelb = mittel / Hinweis, grau = reiner Rechenwert" });
+    { cls: ["", "", "n", ""], w: ["26%", "44%", "16%", "14%"],
+      sum: `${R.filter(r => r.cls.includes("ok")).length} ✓ erfüllt · ${R.filter(r => r.cls.includes("bad")).length} ✗ nicht erfüllt`, note: "Ergebnisfarbe: grün = erfüllt, rot = nicht erfüllt, gelb = mittel / Hinweis, grau = reiner Rechenwert" });
 
   $("rw").innerHTML = h;
 }
@@ -1891,10 +1987,54 @@ $("cmpClose").addEventListener("click", () => { VAR_A = null; renderCompare(); }
 let rwWasOpen = false;
 addEventListener("beforeprint", () => {
   rwWasOpen = $("rwBox").open; $("rwBox").open = true;
+  // Rechenweg: aufgeklappte Blätter werden komplett gedruckt, zugeklappte nur mit Titel und Kurzinfo
   $("printHead").textContent = `U-Wert-Rechner · ${$("bauteil").value} · Ausdruck vom ${new Date().toLocaleDateString("de-DE")} · ${location.href}`;
 });
-addEventListener("afterprint", () => { $("rwBox").open = rwWasOpen; });
-$("printBtn").addEventListener("click", () => window.print());
+addEventListener("afterprint", () => {
+  $("rwBox").open = rwWasOpen;
+  document.querySelectorAll(".noprint").forEach(e => e.classList.remove("noprint"));
+  document.body.classList.remove("pdf-bw");
+});
+
+// PDF-Auswahl: nur angehakte Bereiche drucken (Auswahl wird im Browser gemerkt)
+const PDF_KEY = "uwr-pdf-auswahl";
+function openPdfDlg() {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(PDF_KEY) || "{}"); } catch (e) { /* kein Speicher verfügbar */ }
+  $("pdfDlg").querySelectorAll("input[data-sec]").forEach(cb => {
+    const el = $(cb.dataset.sec.split(",")[0]);
+    cb.closest("label").hidden = !el || el.hidden;          // z. B. Vergleich nur, wenn aktiv
+    if (saved[cb.dataset.sec] !== undefined) cb.checked = saved[cb.dataset.sec];
+  });
+  if (saved.color !== undefined) $("pdfColor").checked = saved.color;
+  $("pdfDlg").hidden = false;
+}
+$("printBtn").addEventListener("click", openPdfDlg);
+$("pdfCancel").addEventListener("click", () => $("pdfDlg").hidden = true);
+$("pdfDlg").addEventListener("click", e => { if (e.target === $("pdfDlg")) $("pdfDlg").hidden = true; });
+$("pdfGo").addEventListener("click", () => {
+  const saved = { color: $("pdfColor").checked };
+  $("pdfDlg").querySelectorAll("input[data-sec]").forEach(cb => {
+    saved[cb.dataset.sec] = cb.checked;
+    if (!cb.checked || cb.closest("label").hidden) cb.dataset.sec.split(",").forEach(id => $(id) && $(id).classList.add("noprint"));
+  });
+  document.body.classList.toggle("pdf-bw", !$("pdfColor").checked);
+  try { localStorage.setItem(PDF_KEY, JSON.stringify(saved)); } catch (e) { /* egal */ }
+  $("pdfDlg").hidden = true;
+  setTimeout(() => window.print(), 60);
+});
+
+// Rechenweg-Blätter ein-/ausklappen (Zustand bleibt beim Neuberechnen erhalten)
+$("rw").addEventListener("toggle", e => {
+  const d = e.target;
+  if (printing || !(d instanceof HTMLDetailsElement) || !d.dataset.k) return;
+  d.open ? RW_CLOSED.delete(d.dataset.k) : RW_CLOSED.add(d.dataset.k);
+}, true);
+$("rw").addEventListener("click", e => {
+  const b = e.target.closest("[data-xl]"); if (!b) return;
+  document.querySelectorAll("#rw details.xl-wrap").forEach(d => b.dataset.xl === "open" ? RW_CLOSED.delete(d.dataset.k) : RW_CLOSED.add(d.dataset.k));
+  renderRechenweg();
+});
 
 // ================= Hilfe (Tooltip + Seitenleiste) =================
 const tip = $("tip");
