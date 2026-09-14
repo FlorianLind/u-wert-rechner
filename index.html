@@ -1407,6 +1407,12 @@ function renderRechenweg() {
   const okbad = cond => cond ? "ok" : "bad";
   let h = "";
 
+  // Bewertung des U-Werts (GEG bzw. Kühlraum-Richtwert) – für Blatt 1 und 5
+  const bt = BT()[$("bauteil").value];
+  const gegL = mode === "haus" ? STD.find(x => x.id === "gegbest").v[bt.cat] ?? null : null;
+  const uSt = mode === "kuehl" ? (c ? okbad(Math.abs(C.u * (c.ti - c.te)) <= 8) : "")
+            : gegL == null ? "" : okbad(C.u <= gegL || (bt.kern && kernLambda(C.L) <= 0.045));
+
   // ---------- Blatt 1: Wärmeschutz ----------
   const r1 = [];
   if (c) r1.push(["Innenluft θ<sub>i</sub>", "", "", "", T(c.ti)]);
@@ -1420,9 +1426,13 @@ function renderRechenweg() {
   r1.push([`Übergang außen R<sub>se</sub>`, "", "", f3(C.rse), ""]);
   if (c) r1.push(["Außenluft θ<sub>e</sub>", "", "", "", T(c.te)]);
   r1.push({ c: [`Summe → R<sub>T</sub>${C.inh ? " (Gefach)" : ""}`, fx(C.L.reduce((a, l) => a + l.d, 0) / 100), "", f3(C.rtG), ""], cls: "sum" });
+  if (C.inh) r1.push({ c: [`R<sub>T</sub> mit Holzanteil <span class="calc">(R'<sub>T</sub> + R''<sub>T</sub>) / 2 = (${f3(C.inh.rUp)} + ${f3(C.inh.rLo)}) / 2 → Blatt 2</span>`, "", "", f3(C.rt), ""], cls: "sum" });
+  r1.push({ c: [`U-Wert = 1 / R<sub>T</sub> <span class="calc">U = 1 / ${f3(C.rt)} = ${f3(C.u)} W/(m²K)` +
+                (gegL != null ? ` · GEG-Grenzwert ${f2(gegL)}` : mode === "kuehl" ? " · Richtwert q ≤ 8 W/m²" : "") + `</span>`,
+                "", "", f3(C.u), "W/(m²K)"], cls: `res ${uSt}` });
   h += sheet("Blatt 1 – Wärmeschutz (von innen nach außen)", "#d97706", ["Schicht / Übergang", "d [m]", "λ [W/(mK)]", "R [m²K/W]", "θ [°C]"], r1, {
     cls: ["", "n", "n", "n", "n"], w: ["40%", "14%", "15%", "16%", "15%"],
-    note: `D = B / C (Luftschichten: Tabellenwert DIN EN ISO 6946) · D-Summe = R<sub>T</sub>` +
+    note: `D = B / C (Luftschichten: Tabellenwert DIN EN ISO 6946) · D-Summe = R<sub>T</sub> · U = 1 / R<sub>T</sub>` +
           (c ? ` · E = θ der Zeile darüber − q · D, mit q = ${f3(C.uG)} · (${f1(c.ti)} − ${br(c.te)}) = ${f2(c.q)} W/m² · Farbe: blau = kalt, rot = warm` : "") });
 
   // ---------- Blatt 2: Holzanteil ----------
@@ -1468,10 +1478,6 @@ function renderRechenweg() {
   }
 
   // ---------- Blatt 5: Ergebnisse ----------
-  const bt = BT()[$("bauteil").value];
-  const gegL = mode === "haus" ? STD.find(x => x.id === "gegbest").v[bt.cat] ?? null : null;
-  const uSt = mode === "kuehl" ? (c ? okbad(Math.abs(C.u * (c.ti - c.te)) <= 8) : "")
-            : gegL == null ? "" : okbad(C.u <= gegL || (bt.kern && kernLambda(C.L) <= 0.045));
   const R = [];
   const Ls = C.L.filter(l => l.d > 0);
   R.push(res(`R<sub>T</sub>${C.inh ? " (Gefach)" : ""}`, "R<sub>si</sub> + Σ R + R<sub>se</sub>", `${f2(C.rsi)} + ${f3(C.sumR)} + ${f2(C.rse)}`, f3(C.rtG), "m²K/W"));
