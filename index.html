@@ -67,7 +67,7 @@
   .info:hover { background:#3730a3; color:#fff; }
   #tip { position:fixed; z-index:100; max-width:290px; background:#1d2330; color:#fff; font-size:12.5px; line-height:1.4;
          padding:7px 10px; border-radius:6px; pointer-events:none; box-shadow:0 6px 18px #0004; }
-  aside { position:sticky; top:16px; }
+  aside { position:sticky; top:70px; }
   aside .card { border-left:4px solid #6366f1; }
   #hTitle { margin:0 0 8px; font-size:16px; }
   #hBody { font-size:14px; }
@@ -114,7 +114,7 @@
   .sbar { position:absolute; left:0; right:0; top:8px; height:12px; border-radius:99px;
           background:linear-gradient(90deg, #7c3aed, #16a34a 38%, #eab308 62%, #dc2626); }
   .tick { position:absolute; top:0; height:28px; width:2px; background:var(--c); transform:translateX(-1px); }
-  .tick span { position:absolute; left:50%; transform:translateX(-50%); font-size:11px; font-weight:700; color:var(--c); white-space:nowrap; }
+  .tick span { position:absolute; line-height:14px; left:50%; transform:translateX(-50%); font-size:11px; font-weight:700; color:var(--c); white-space:nowrap; }
   .ax { position:absolute; top:30px; transform:translateX(-50%); font-size:10px; color:var(--muted); }
   .cur { position:absolute; top:-4px; height:36px; width:4px; background:#111827; border-radius:2px; transform:translateX(-2px); }
   .cur span { position:absolute; top:52px; left:50%; transform:translateX(-50%); background:#111827; color:#fff; font-size:12px;
@@ -169,17 +169,30 @@
 
   /* ===== Mobilversion ===== */
   .hclose { display:none; }
-  #mbar { display:none; }
+  /* feste Ergebnisleiste oben (alle Geräte) */
+  body { padding-top:54px; }
+  #mbar { position:fixed; top:0; left:0; right:0; z-index:70; background:#fff; border-bottom:1px solid var(--line); box-shadow:0 2px 12px #0001; }
+  .mbin { max-width:1340px; margin:0 auto; padding:7px 16px; display:flex; gap:10px; align-items:center; }
+  #mbU { border:0; background:none; font-weight:700; font-size:18px; padding:4px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  #mbU small { font-weight:500; color:var(--muted); font-size:12px; }
+  #mbS { flex:0 1 auto; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  #mbS .badge, #mbN .badge { font-size:12px; margin:0; }
+  #mbS { flex:none; }
+  #mbN { flex:0 1 auto; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  #mbN .badge { background:#ede9fe; color:#5b21b6; }
+  #mbB { flex:1; min-width:0; color:var(--muted); font-size:13px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  #mbHelp { width:36px; height:36px; flex:none; border-radius:50%; padding:0; font-weight:700; background:#e0e7ff; color:#3730a3; border:0; }
   @media (max-width:1080px) {
     /* Hilfe als Fenster, das von unten hereinfährt */
-    aside { position:fixed !important; left:0; right:0; bottom:0; z-index:80; max-height:72vh; overflow:auto;
-            transform:translateY(110%); transition:transform .25s ease; }
+    aside { position:fixed !important; top:auto; left:0; right:0; bottom:0; z-index:80; max-height:72vh; overflow:auto;
+            transform:translateY(110%); transition:transform .25s ease, visibility .25s; visibility:hidden; }
+    aside.open { visibility:visible; }
     aside.open { transform:none; }
     aside .card { margin:0; border-radius:14px 14px 0 0; border-left:0; border-top:4px solid #6366f1; box-shadow:0 -10px 30px #0003; }
     .hclose { display:block; float:right; margin:-4px -4px 0 8px; padding:4px 10px; }
   }
   @media (max-width:760px) {
-    .wrap { padding:12px 10px 84px; gap:12px; }
+    .wrap { padding:12px 10px 24px; gap:12px; }
     .card { padding:12px; margin-bottom:12px; }
     h1 { font-size:21px; }
     h2 { font-size:16px; }
@@ -190,17 +203,12 @@
     .seg button { flex:1; padding:10px 8px; }
     .info { width:20px; height:20px; font-size:12px; }   /* größere Tippfläche */
     button.mv, button.x { padding:6px 10px; }
-    .dsvg text { font-size:13px; }
-    .dsvg text.s { font-size:12px; }
+    .dsvg text { font-size:12px; }
     .stack .side { flex-basis:48px; }
-    /* feste Ergebnisleiste unten */
-    #mbar { display:flex; position:fixed; left:0; right:0; bottom:0; z-index:70; gap:8px; align-items:center;
-            padding:8px 10px calc(8px + env(safe-area-inset-bottom)); background:#fff; border-top:1px solid var(--line); box-shadow:0 -4px 16px #0002; }
-    #mbU { border:0; background:none; font-weight:700; font-size:17px; padding:4px; white-space:nowrap; }
-    #mbU small { font-weight:500; color:var(--muted); font-size:12px; }
-    #mbS { flex:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-    #mbS .badge { font-size:12px; margin:0; }
-    #mbHelp { width:36px; height:36px; flex:none; border-radius:50%; padding:0; font-weight:700; background:#e0e7ff; color:#3730a3; border:0; }
+    .mbin { padding:6px 10px; gap:6px; }
+    #mbB, #mbU small { display:none; }
+    #mbU { font-size:17px; }
+    #mbN { flex:1; }
     /* Baustoff-Auswahl als Fenster von unten */
     #picker { position:fixed; left:0 !important; right:0; top:auto !important; bottom:0; width:auto; max-width:none;
               border-radius:14px 14px 0 0; padding:12px; z-index:90; }
@@ -209,6 +217,15 @@
 </style>
 </head>
 <body>
+<div id="mbar">
+  <div class="mbin">
+    <button id="mbU" type="button" title="Zum Ergebnis springen">U = –</button>
+    <span id="mbS"></span>
+    <span id="mbN"></span>
+    <span id="mbB"></span>
+    <button id="mbHelp" type="button" title="Kurzanleitung" aria-label="Kurzanleitung">?</button>
+  </div>
+</div>
 <div class="wrap">
 <main>
   <h1>U-Wert-Rechner</h1>
@@ -344,11 +361,6 @@
   <div id="plist"></div>
 </div>
 <div id="tip" hidden></div>
-<div id="mbar">
-  <button id="mbU" type="button" title="Zum Ergebnis">U = –</button>
-  <span id="mbS"></span>
-  <button id="mbHelp" type="button" aria-label="Hilfe">?</button>
-</div>
 
 <script>
 // ================= Baustoffe =================
@@ -864,7 +876,10 @@ function calc() {
 
   // Ergebnisleiste (Mobil)
   $("mbU").innerHTML = rt > 0 ? `U = ${fmt(u)} <small>W/(m²K)</small>` : "U = –";
-  $("mbS").innerHTML = $("geg").querySelector(".badge")?.outerHTML || "";
+  // Kurzstatus GEG (bzw. Wärmestrom bei Kühlzellen) für die Leiste
+  const gb = $("geg").querySelector(".badge.ok, .badge.bad");
+  $("mbS").innerHTML = gb ? `<span class="${gb.className}" title="${gb.textContent}">${mode === "haus" ? "GEG" : "q ≤ 8"} ${gb.classList.contains("ok") ? "✓" : "✗"}</span>` : "";
+  $("mbB").textContent = $("bauteil").value;
 
   $("stack").innerHTML = `<div class="side">${M.inn}</div>` +
     L.filter(p => p.d > 0).map(p =>
@@ -1088,7 +1103,8 @@ function renderStandards(u, rt, L) {
     rows = STD.filter(s => s.v[b.cat] != null).map(s => ({ ...s, lim: s.v[b.cat] }));
   }
   if (!rows.length) {
-    box.innerHTML = `<p class="muted">Für Innenwände zwischen beheizten Räumen gibt es keine U-Wert-Anforderungen – es fließt praktisch keine Wärme nach außen.</p>`;
+    $("mbN").innerHTML = "";
+    box.innerHTML =`<p class="muted">Für Innenwände zwischen beheizten Räumen gibt es keine U-Wert-Anforderungen – es fließt praktisch keine Wärme nach außen.</p>`;
     return;
   }
   rows.sort((a, b) => b.lim - a.lim);
@@ -1105,17 +1121,30 @@ function renderStandards(u, rt, L) {
   });
   const met = rows.filter(r => r.ok);
   const best = met[met.length - 1];
+  $("mbN").innerHTML = best
+    ? `<span class="badge" title="Niveau: ${best.name}">Niveau: ${best.short}</span>`
+    : `<span class="badge bad" title="schlechter als alle Vergleichswerte">Niveau: unter allen</span>`;
   let h = b.grp === "Einblasdämmung"
     ? `<div class="kv" style="margin-bottom:6px">💨 Einblasdämmung – geeignete Stoffe, Dicken &amp; Sonderregeln ${info("einblas")}</div>` : "";
   h += `<div class="kv">Niveau deines Bauteils: ` + (best
     ? `<span class="badge ok">${best.name}</span>`
     : `<span class="badge bad">schlechter als alle Vergleichswerte</span>`) + `</div>`;
-  h += `<div class="scale"><div class="sbar"></div>`;
-  [0.1, 0.2, 0.5, 1, 2].forEach(v => h += `<div class="ax" style="left:${pos(v)}%">${fmt(v, v < 1 ? 1 : 0)}</div>`);
   // Beschriftungen am Rand nach innen ausrichten, damit nichts abgeschnitten wird
   const edge = p => p > 85 ? "left:auto;right:0;transform:none;" : p < 15 ? "left:0;transform:none;" : "";
-  rows.forEach((r, i) => { const p = pos(r.lim);
-    h += `<div class="tick" style="left:${p}%;--c:${r.c}"><span style="top:${-16 - (i % 3) * 14}px;${edge(p)}">${r.short}</span></div>`; });
+  // Beschriftungen so auf Zeilen verteilen, dass sie sich bei der aktuellen Breite nicht überlappen
+  const bw = Math.max(200, box.clientWidth - 20), laneEnd = [];
+  let ticks = "", lanes = 1;
+  [...rows].sort((a, b) => a.lim - b.lim).forEach(r => {
+    const p = pos(r.lim), w = r.short.length * 6.8 + 8, x = p / 100 * bw;
+    const x0 = p > 85 ? x - w : p < 15 ? x : x - w / 2;
+    let lane = 0;
+    while (laneEnd[lane] !== undefined && laneEnd[lane] > x0 - 6) lane++;
+    laneEnd[lane] = x0 + w; lanes = Math.max(lanes, lane + 1);
+    ticks += `<div class="tick" style="left:${p}%;--c:${r.c}"><span style="top:${-17 - lane * 16}px;${edge(p)}">${r.short}</span></div>`;
+  });
+  h += `<div class="scale" style="margin-top:${24 + lanes * 16}px"><div class="sbar"></div>`;
+  [0.1, 0.2, 0.5, 1, 2].forEach(v => h += `<div class="ax" style="left:${pos(v)}%">${fmt(v, v < 1 ? 1 : 0)}</div>`);
+  h += ticks;
   const pu = pos(u);
   h += `<div class="cur" style="left:${pu}%"><span style="${edge(pu)}">dein Bauteil: U = ${fmt(u, 2)}</span></div></div>`;
   h += `<div class="tbl"><div class="srows"><div class="srow sh"><span></span><span>Vergleichswert</span><span>U [W/(m²K)]</span><span>Status</span><span>Nötige Zusatzdämmung ${info("dd")}</span><span>Quelle</span></div>`;
