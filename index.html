@@ -140,6 +140,32 @@
   .rw-f { font-family:ui-monospace, Consolas, "Courier New", monospace; font-size:13px; background:#f8fafc; border:1px solid var(--line);
           border-radius:6px; padding:5px 8px; margin:3px 0; overflow-wrap:anywhere; }
 
+  /* Rechenweg als Excel-Tabellen */
+  .xl-wrap { margin:16px 0 0; }
+  .xl-title { font-weight:700; font-size:14px; margin:0 0 4px; }
+  table.xl { width:100%; border-collapse:collapse; table-layout:fixed; font-size:13px; font-variant-numeric:tabular-nums; background:#fff; }
+  table.xl th, table.xl td { border:1px solid #d0d7de; padding:3px 6px; overflow-wrap:anywhere; vertical-align:top; text-align:left; }
+  table.xl col.xl-rn { width:30px; }
+  table.xl tr > th:first-child { background:#f3f4f6; color:#6b7280; font-weight:500; text-align:center; font-size:11px; }
+  table.xl tr.xl-let th { background:#f3f4f6; color:#6b7280; font-weight:500; font-size:11px; text-align:center; padding:1px; }
+  table.xl tr.xl-head th { background:#e8f0fe; color:#1d2330; font-weight:700; font-size:12px; }
+  table.xl .n { text-align:right; }
+  table.xl tr.sum td { font-weight:700; background:#f8fafc; border-top:2px solid #94a3b8; }
+  table.xl tr.mute td { color:#9ca3af; }
+  table.xl tr.hi td { background:#fef3c7; }
+  table.xl tr.res td:nth-last-child(2) { font-weight:700; background:#f8fafc; }
+  table.xl tr.res.ok td:nth-last-child(2) { background:#dcfce7; color:var(--ok); }
+  table.xl tr.res.bad td:nth-last-child(2) { background:#fee2e2; color:var(--bad); }
+  table.xl tr.res.warn td:nth-last-child(2) { background:#fef3c7; color:#92400e; }
+  .xl-title { border-left:4px solid var(--acc); padding-left:7px; }
+  table.xl .calc { display:block; color:var(--muted); font-size:12px; font-family:ui-monospace, Consolas, monospace; margin-top:1px; }
+  .xl-note { font-size:12px; color:var(--muted); margin-top:3px; }
+  @container (max-width: 560px) {
+    table.xl { font-size:11.5px; } table.xl col.xl-rn { width:20px; }
+    table.xl th, table.xl td { padding:2px 3px; } table.xl .calc { font-size:11px; }
+  }
+  @media print { .xl-wrap { break-inside:avoid; } }
+
   /* Werkzeugleiste, Hinweis-Toast, Vergleich */
   .toolbar { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-left:auto; }
   .toolbar button { padding:7px 12px; }
@@ -307,6 +333,7 @@
     <div style="flex:2 1 220px">
       <label for="bauteil">Bauteil <i class="info" data-help="bauteil">i</i></label>
       <select id="bauteil" data-help="bauteil"></select>
+      <div class="muted" id="btLegend" style="margin-top:4px;font-size:12px"></div>
     </div>
     <div>
       <label for="rsi">R<sub>si</sub> [m²K/W] <i class="info" data-help="rsi">i</i></label>
@@ -609,7 +636,8 @@ const HELP = {
     <p>Der Umschalter setzt passende Bauteile, Klimawerte, Tauperiode und Bewertungen.</p>` },
   bauteil: { t:"Bauteil", s:"Bauteilart – legt Rsi/Rse, Grenzwert und Beispielaufbau fest.", l:`
     <p>Die Bauteilart bestimmt die <b>Wärmeübergangswiderstände</b> (je nach Richtung des Wärmestroms) und den Vergleichswert (GEG bzw. Kühlraum-Richtwert).</p>
-    <p>„Beispielaufbau laden“ setzt einen typischen Schichtaufbau, den du beliebig ändern kannst.</p>` },
+    <p>„Beispielaufbau laden“ setzt einen typischen Schichtaufbau, den du beliebig ändern kannst.</p>
+    <p>Die Liste ist nach <b>Bauteilart</b> gruppiert und innerhalb jeder Gruppe <b>von schlecht nach gut</b> sortiert – der U-Wert des Beispielaufbaus steht dahinter.</p>` },
   rsi: { t:"Wärmeübergangswiderstand innen R<sub>si</sub>", s:"Widerstand beim Übergang Raumluft → Oberfläche [m²K/W].", l:`
     <p>R<sub>si</sub> beschreibt, wie gut Wärme von der Raumluft an die Bauteiloberfläche übergeht (Konvektion + Strahlung).</p>
     <ul><li>0,13 – Wärmestrom horizontal (Wände)</li><li>0,10 – Wärmestrom aufwärts (Dächer, Decken nach oben)</li><li>0,17 – Wärmestrom abwärts (Böden)</li></ul>
@@ -791,7 +819,9 @@ Object.assign(HELP, {
     <ol><li>Aufbau mit Dämmung 1 einstellen und <b>⚖️ Vergleichen</b> klicken → das ist Variante A.</li><li>Dämmstoff oder Dicke ändern → das ist Variante B.</li><li>Die Tabelle zeigt U-Wert, Dicke, Niveau, Tauwasser, Schimmel-Check, Phasenverschiebung und TAV beider Varianten.</li></ol>
     <p>„⇄ A und B tauschen“ lädt Variante A wieder in den Editor.</p>` },
   rechenweg: { t:"Rechenweg", s:"Zeigt jeden Rechenschritt mit den eingesetzten Zahlen – zum Nachvollziehen und Kontrollieren.", l:`
-    <p>Der Rechenweg zeigt alle Schritte mit den aktuellen Zahlen: Schichtwiderstände, R<sub>T</sub>, ggf. Holzanteil, U-Wert, Temperaturen, Taupunkt, Schimmel-Check, Glaser und sommerlichen Wärmeschutz.</p>
+    <p>Der Rechenweg zeigt alle Schritte als Tabellen wie in Excel – mit Spaltenbuchstaben, Zeilennummern und Summenzeile:</p>
+    <ul><li><b>Wärmeschutz:</b> je Schicht d, λ, R = d/λ und die Temperatur an der Schichtgrenze</li><li><b>Holzanteil:</b> Gefach/Holz, oberer und unterer Grenzwert</li><li><b>Feuchte (Glaser):</b> μ, s<sub>d</sub>, Temperatur und Sättigungsdampfdruck an jeder Grenze</li><li><b>Sommer:</b> Rohdichte, Wärmekapazität, Eindringtiefe</li><li><b>Ergebnisse:</b> jede Größe mit Formel, eingesetzten Zahlen und Ergebnis</li></ul>
+    <p>Unter jeder Tabelle steht, wie die Spalten berechnet werden (z. B. „D = B / C“).</p>
     <p>Er aktualisiert sich bei jeder Änderung und wird beim PDF-Export mitgedruckt.</p>` },
   frsi: { t:"Schimmel-Check f<sub>Rsi</sub> (DIN 4108-2)", s:"Mit Rsi = 0,25 (Ecken, hinter Möbeln): fRsi ≥ 0,70 bzw. θsi ≥ 12,6 °C bei 20 °C / −5 °C.", l:`
     <p>Schimmel wächst schon ab etwa 80 % Luftfeuchte direkt an der Oberfläche. DIN 4108-2 fordert deshalb einen <b>Temperaturfaktor f<sub>Rsi</sub> ≥ 0,70</b>. Bei 20 °C innen und −5 °C außen heißt das θ<sub>si</sub> ≥ 12,6 °C.</p>
@@ -983,6 +1013,32 @@ function readLayers() {
   });
 }
 
+// Reihenfolge der Kategorien in der Bauteil-Auswahl
+const CAT_ORDER = [["wand", "Außenwand"], ["steil", "Steildach"], ["flach", "Flachdach"], ["ogd", "Oberste Geschossdecke"],
+                   ["keller", "Kellerdecke"], ["boden", "Bodenplatte"], ["innen", "Innenwand"]];
+// U-Wert eines Beispielaufbaus (für die Sortierung der Auswahlliste), gleiche Rechnung wie im Editor
+function presetU(b) {
+  const L = b.preset.map(([n, d, w]) => {
+    const m = MAT[n], f = Math.min(0.9, (w || 0) / 100);
+    const R = m.air ? m.air * airR(d, b.rsi) : m.l > 0 ? d / 100 / m.l : 0;
+    const Rw = d / 100 / LAMBDA_WOOD;
+    return { d, R, f, Rw, Req: f > 0 ? 1 / ((1 - f) / Math.max(R, 1e-9) + f / Math.max(Rw, 1e-9)) : R };
+  });
+  const inh = inhomogeneous(L, b.rsi, b.rse);
+  return 1 / (inh ? inh.rt : b.rsi + b.rse + L.reduce((a, l) => a + l.R, 0));
+}
+
+// Ampel für die Bauteil-Liste: 🔴 > 2× GEG · 🟠 über GEG · 🟡 GEG erfüllt · 🟢 BEG-förderfähig · ⚪ keine Anforderung
+const RATE = [{ dot:"🔴", bg:"#fee2e2" }, { dot:"🟠", bg:"#ffedd5" }, { dot:"🟡", bg:"#fef9c3" }, { dot:"🟢", bg:"#dcfce7" }, { dot:"⚪", bg:"#ffffff" }];
+function rateU(b, m) {
+  const u = b.u0;
+  if (m === "kuehl") return u * (MODES.kuehl.te - MODES.kuehl.ti) <= 8 ? RATE[3] : RATE[0];
+  if (b.kern) return RATE[3];                               // Kerndämmung: Sonderregeln GEG/BEG erfüllt
+  const gl = STD.find(s => s.id === "gegbest").v[b.cat], bg = STD.find(s => s.id === "beg").v[b.cat];
+  if (gl == null) return RATE[4];
+  return u > 2 * gl ? RATE[0] : u > gl ? RATE[1] : u > bg ? RATE[2] : RATE[3];
+}
+
 // Inhomogene Bauteile nach DIN EN ISO 6946: oberer (R'T) und unterer (R''T) Grenzwert, RT = Mittelwert
 function inhomogeneous(L, rsi, rse) {
   const inh = L.filter(l => l.f > 0 && l.d > 0).slice(0, 6);
@@ -1024,10 +1080,20 @@ function setMode(m) {
   mode = m;
   const M = MODES[m];
   $("mode").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
-  const groups = {};
-  Object.entries(M.bt).forEach(([k, v]) => (groups[v.grp || (m === "kuehl" ? "Kühlzellen" : "Standard")] ||= []).push(k));
-  $("bauteil").innerHTML = Object.entries(groups).map(([g, ks]) =>
-    `<optgroup label="${g}">${ks.map(k => `<option>${k}</option>`).join("")}</optgroup>`).join("");
+  // Auswahlliste: nach Kategorie gruppiert, innerhalb von schlecht (hoher U-Wert) nach gut
+  Object.values(M.bt).forEach(v => { if (v.u0 === undefined) v.u0 = presetU(v); });
+  const groups = m === "kuehl"
+    ? [["Kühlzellen", Object.keys(M.bt)]]
+    : CAT_ORDER.map(([cat, label]) => [label, Object.keys(M.bt).filter(k => M.bt[k].cat === cat)]).filter(g => g[1].length);
+  $("bauteil").innerHTML = groups.map(([g, ks]) =>
+    `<optgroup label="${g} (schlecht → gut)">${ks.sort((a, b) =>   // erst nach Ampel (🔴 → 🟢), dann nach U-Wert (hoch → niedrig)
+        (RATE.indexOf(rateU(M.bt[a], m)) % 4) - (RATE.indexOf(rateU(M.bt[b], m)) % 4) || M.bt[b].u0 - M.bt[a].u0)
+      .map(k => { const r = rateU(M.bt[k], m);
+        return `<option value="${k}" style="background:${r.bg}">${r.dot} ${k} · U ≈ ${fmt(M.bt[k].u0, 2)}</option>`; }).join("")}</optgroup>`).join("");
+  if (m === "haus") $("bauteil").value = "Außenwand";
+  $("btLegend").textContent = m === "haus"
+    ? "🔴 mehr als 2× GEG-Grenzwert · 🟠 über GEG · 🟡 GEG erfüllt · 🟢 BEG-förderfähig · ⚪ keine Anforderung"
+    : "🟢 Wärmestrom q ≤ 8 W/m² · 🔴 q > 8 W/m²";
   $("drawing").innerHTML = m === "kuehl" ? COLD_SVG : HOUSE_SVG;
   $("lblTi").innerHTML = M.lbl.ti; $("lblPhi").innerHTML = M.lbl.phi;
   $("lblTe").innerHTML = M.lbl.te; $("lblPhe").innerHTML = M.lbl.phe;
@@ -1304,74 +1370,150 @@ function drawSummer(tav, eta) {
   svg.innerHTML = s;
 }
 
-// ================= Rechenweg =================
+// ================= Rechenweg (Tabellen wie in Excel, mit Farben) =================
 function renderRechenweg() {
   const C = CALC, c = CLIM, g = GL, s = SUM;
   if (!C.L) return;
   const f1 = x => fmt(x, 1), f2 = x => fmt(x, 2), f3 = x => fmt(x, 3);
   const fx = (x, n = 4) => Number.isFinite(x) ? x.toLocaleString("de-DE", { maximumFractionDigits:n }) : "–";
   const br = x => x < 0 ? `(${f1(x)})` : f1(x);
-  const F = t => `<div class="rw-f">${t}</div>`;
-  const step = (t, b) => `<div class="rw-step"><h4>${t}</h4>${b}</div>`;
-  const Ls = C.L.filter(l => l.d > 0);
-  let n = 1, h = "";
+  const LET = "ABCDEFGHIJ";
+  const sw = n => `<span class="sw" style="background:${MAT[n].c};margin-right:5px;vertical-align:-2px"></span>`;
+  // bedingte Formatierung wie in Excel: Temperatur von blau (kalt) nach rot (warm)
+  const tc = t => {
+    if (!c) return "";
+    const lo = Math.min(c.ti, c.te), hi = Math.max(c.ti, c.te), f = hi > lo ? Math.min(1, Math.max(0, (t - lo) / (hi - lo))) : 0.5;
+    return `background:hsl(${Math.round(220 - 220 * f)} 80% 90%)`;
+  };
+  const T = t => ({ v: f1(t), s: tc(t) });
+  // Tabelle im Excel-Stil: Spaltenbuchstaben, Zeilennummern, farbige Kopfzeile
+  // rows = Array oder { c:[…], cls:"sum|mute|hi|res ok|res bad|res warn" }; Zelle = Text oder { v, s:"css" }
+  const sheet = (title, col, head, rows, opt = {}) => {
+    const cls = opt.cls || head.map(() => "");
+    const tint = `background:color-mix(in srgb, ${col} 16%, white)`;
+    let t = `<div class="xl-wrap"><div class="xl-title" style="border-color:${col}">${title}</div><table class="xl"><colgroup><col class="xl-rn">` +
+      (opt.w || head.map(() => "")).map(w => `<col${w ? ` style="width:${w}"` : ""}>`).join("") + `</colgroup>`;
+    t += `<tr class="xl-let"><th></th>${head.map((_, i) => `<th>${LET[i]}</th>`).join("")}</tr>`;
+    t += `<tr class="xl-head"><th>1</th>${head.map((h, i) => `<th class="${cls[i]}" style="${tint}">${h}</th>`).join("")}</tr>`;
+    rows.forEach((r, j) => {
+      const cells = Array.isArray(r) ? r : r.c;
+      t += `<tr class="${Array.isArray(r) ? "" : r.cls || ""}"><th>${j + 2}</th>` +
+        cells.map((v, i) => v && typeof v === "object" ? `<td class="${cls[i]}" style="${v.s || ""}">${v.v}</td>` : `<td class="${cls[i]}">${v}</td>`).join("") + `</tr>`;
+    });
+    return t + `</table>${opt.note ? `<div class="xl-note">${opt.note}</div>` : ""}</div>`;
+  };
+  // Ergebniszeile: Größe | Formel + eingesetzte Zahlen | Ergebnis | Einheit – st = "ok" | "bad" | "warn" färbt das Ergebnis
+  const res = (name, formula, calc, val, unit, st = "") => ({ c: [name, `${formula}<span class="calc">${calc}</span>`, val, unit], cls: `res ${st}` });
+  const okbad = cond => cond ? "ok" : "bad";
+  let h = "";
 
-  h += step(`${n++}. Wärmedurchlasswiderstand jeder Schicht: R = d / λ`, Ls.map(l => F(`${l.name}: ` + (MAT[l.name].air
-    ? `Luftschicht d = ${fx(l.d, 2)} cm → R = <b>${f3(l.R)}</b> m²K/W (Tabellenwert DIN EN ISO 6946${MAT[l.name].air < 1 ? ", × 0,5 schwach belüftet" : ""})`
-    : `R = ${fx(l.d / 100)} m / ${fx(l.l, 3)} W/(mK) = <b>${f3(l.R)}</b> m²K/W`))).join(""));
+  // ---------- Blatt 1: Wärmeschutz ----------
+  const r1 = [];
+  if (c) r1.push(["Innenluft θ<sub>i</sub>", "", "", "", T(c.ti)]);
+  r1.push([`Übergang innen R<sub>si</sub>`, "", "", f3(C.rsi), c ? T(c.pts[0].t) : ""]);
+  C.L.forEach((l, i) => {
+    if (l.d <= 0) return;
+    const air = MAT[l.name].air;
+    r1.push([sw(l.name) + l.name + (l.f > 0 ? ` <span class="calc">Gefach, ${fx(l.f * 100, 1)} % Holz → Blatt 2</span>` : ""),
+      fx(l.d / 100), air ? "Tabelle" : fx(l.l, 3), f3(l.R), c ? T(c.pts[i + 1].t) : ""]);
+  });
+  r1.push([`Übergang außen R<sub>se</sub>`, "", "", f3(C.rse), ""]);
+  if (c) r1.push(["Außenluft θ<sub>e</sub>", "", "", "", T(c.te)]);
+  r1.push({ c: [`Summe → R<sub>T</sub>${C.inh ? " (Gefach)" : ""}`, fx(C.L.reduce((a, l) => a + l.d, 0) / 100), "", f3(C.rtG), ""], cls: "sum" });
+  h += sheet("Blatt 1 – Wärmeschutz (von innen nach außen)", "#d97706", ["Schicht / Übergang", "d [m]", "λ [W/(mK)]", "R [m²K/W]", "θ [°C]"], r1, {
+    cls: ["", "n", "n", "n", "n"], w: ["40%", "14%", "15%", "16%", "15%"],
+    note: `D = B / C (Luftschichten: Tabellenwert DIN EN ISO 6946) · D-Summe = R<sub>T</sub>` +
+          (c ? ` · E = θ der Zeile darüber − q · D, mit q = ${f3(C.uG)} · (${f1(c.ti)} − ${br(c.te)}) = ${f2(c.q)} W/m² · Farbe: blau = kalt, rot = warm` : "") });
 
-  h += step(`${n++}. Wärmedurchgangswiderstand${C.inh ? " im Gefach (ohne Holz)" : ""}: R<sub>T</sub> = R<sub>si</sub> + ΣR + R<sub>se</sub>`,
-    F(`R<sub>T</sub> = ${f2(C.rsi)} + (${Ls.map(l => f3(l.R)).join(" + ")}) + ${f2(C.rse)} = <b>${f3(C.rtG)}</b> m²K/W`));
-
+  // ---------- Blatt 2: Holzanteil ----------
   if (C.inh) {
     const I = C.inh;
-    let b = I.inh.map(l => F(`${l.name}: Holzanteil f = ${fx(l.f * 100, 1)} % → R<sub>Holz</sub> = ${fx(l.d / 100)} m / 0,13 W/(mK) = ${f3(l.Rw)} m²K/W`)).join("");
-    b += I.sections.map(sec => F(`Abschnitt ${sec.wood.map(w => w ? "Holz" : "Gefach").join(" / ")} (Flächenanteil ${fx(sec.fa * 100, 1)} %): R<sub>T,j</sub> = ${f3(sec.R)} m²K/W`)).join("");
-    b += F(`Oberer Grenzwert: 1/R'<sub>T</sub> = Σ f<sub>j</sub>/R<sub>T,j</sub> = ${I.sections.map(sec => `${fx(sec.fa, 3)}/${f3(sec.R)}`).join(" + ")} → R'<sub>T</sub> = <b>${f3(I.rUp)}</b> m²K/W`);
-    b += I.inh.map(l => F(`${l.name}: R'' = 1 / (${fx(1 - l.f, 3)}/${f3(l.R)} + ${fx(l.f, 3)}/${f3(l.Rw)}) = ${f3(l.Req)} m²K/W`)).join("");
-    b += F(`Unterer Grenzwert: R''<sub>T</sub> = ${f2(C.rsi)} + ${Ls.map(l => f3(I.inh.includes(l) ? l.Req : l.R)).join(" + ")} + ${f2(C.rse)} = <b>${f3(I.rLo)}</b> m²K/W`);
-    b += F(`R<sub>T</sub> = (${f3(I.rUp)} + ${f3(I.rLo)}) / 2 = <b>${f3(I.rt)}</b> m²K/W · Fehler e = (${f3(I.rUp)} − ${f3(I.rLo)}) / (2 · ${f3(I.rt)}) = ${fx(I.e * 100, 1)} %`);
-    h += step(`${n++}. Holzanteil – inhomogenes Bauteil (DIN EN ISO 6946)`, b);
+    h += sheet("Blatt 2a – Inhomogene Schichten (Holzanteil)", "#8b5a2b", ["Schicht", "Holz f", "R Gefach", "R Holz", "R''"],
+      I.inh.map(l => [sw(l.name) + l.name, fx(l.f, 3), f3(l.R), f3(l.Rw), f3(l.Req)]),
+      { cls: ["", "n", "n", "n", "n"], w: ["36%", "14%", "16%", "16%", "18%"],
+        note: "D = d / 0,13 (Nadelholz) · E = 1 / ((1 − B) / C + B / D) – flächengewichteter Widerstand der Schicht" });
+    const rows = I.sections.map(sec => [sec.wood.map(w => w ? "🪵 Holz" : "Gefach").join(" / "), fx(sec.fa, 3), f3(sec.R), fx(sec.fa / sec.R, 5)]);
+    rows.push({ c: ["Summe", fx(I.sections.reduce((a, x) => a + x.fa, 0), 3), "", fx(1 / I.rUp, 5)], cls: "sum" });
+    h += sheet("Blatt 2b – Abschnitte für den oberen Grenzwert", "#8b5a2b", ["Abschnitt", "Flächenanteil f<sub>j</sub>", "R<sub>T,j</sub> [m²K/W]", "f<sub>j</sub> / R<sub>T,j</sub>"], rows,
+      { cls: ["", "n", "n", "n"], w: ["34%", "22%", "22%", "22%"], note: "C = R<sub>si</sub> + Σ R des Abschnitts + R<sub>se</sub> · D = B / C · R'<sub>T</sub> = 1 / Summe D" });
   }
 
-  h += step(`${n++}. U-Wert: U = 1 / R<sub>T</sub>`, F(`U = 1 / ${f3(C.rt)} = <b>${f3(C.u)}</b> W/(m²K)`));
+  // ---------- Blatt 3: Feuchte / Glaser ----------
+  if (c && g) {
+    let cum = 0;
+    const cut = g.vent ? C.L.findIndex(l => l.name === g.vent) : -1;
+    const planeAt = k => g.planes.find(p => p.k === k);
+    const r3 = [[`Innenluft (p<sub>i</sub> = ${fmt(c.pi, 0)} Pa)`, "", "", "0,00", T(c.pts[0].t), fmt(ps(c.pts[0].t), 0)]];
+    C.L.forEach((l, i) => {
+      if (l.d <= 0) return;
+      const out = cut >= 0 && i >= cut;
+      if (!out) cum += l.sd;
+      const p = planeAt(i + 1);
+      r3.push({ c: [sw(l.name) + l.name + (out ? ` <span class="calc">außerhalb der belüfteten Luftschicht – nicht angesetzt</span>` : "") +
+                    (p ? ` <span class="calc">💧 Tauwasser an der Außenseite: ${fmt(p.mass * 1000, 0)} g/m²</span>` : ""),
+                    fx(l.mu, 0), fmtSd(l.sd), out ? "" : fmtSd(cum), T(c.pts[i + 1].t), fmt(ps(c.pts[i + 1].t), 0)],
+                cls: out ? "mute" : p ? "hi" : "" });
+    });
+    r3.push({ c: [`Summe (p<sub>e</sub> = ${fmt(c.pe, 0)} Pa)`, "", "", fmtSd(g.S), "", ""], cls: "sum" });
+    h += sheet("Blatt 3 – Feuchteschutz (Glaser)", "#2563eb", ["Schicht", "μ [–]", "s<sub>d</sub> [m]", "Σ s<sub>d</sub> [m]", "θ [°C]", "p<sub>s</sub> [Pa]"], r3, {
+      cls: ["", "n", "n", "n", "n", "n"], w: ["34%", "12%", "13%", "14%", "12%", "15%"],
+      note: "C = B · d · D = fortlaufende Summe von C · E aus Blatt 1 · F = Sättigungsdampfdruck bei E (Magnus-Formel) · gelb = Tauwasserebene, grau = nicht angesetzt" });
+  }
 
+  // ---------- Blatt 4: Sommer ----------
+  if (s && s.layers.length) {
+    h += sheet("Blatt 4 – Sommerlicher Wärmeschutz: Eindringtiefe je Schicht", "#dc2626", ["Schicht", "ρ [kg/m³]", "c [J/(kgK)]", "δ [cm]", "ξ = d / δ"],
+      s.layers.map(x => [sw(x.name) + x.name, fx(x.rho, 0), fx(x.cap, 0), fx(x.delta * 100, 1), fx(x.xi, 3)]),
+      { cls: ["", "n", "n", "n", "n"], w: ["36%", "15%", "16%", "15%", "18%"], note: "D = √(λ · T / (π · B · C)) mit T = 86 400 s (24 h) · E = d / D – je größer ξ, desto stärker gedämpft und verzögert" });
+  }
+
+  // ---------- Blatt 5: Ergebnisse ----------
+  const bt = BT()[$("bauteil").value];
+  const gegL = mode === "haus" ? STD.find(x => x.id === "gegbest").v[bt.cat] ?? null : null;
+  const uSt = mode === "kuehl" ? (c ? okbad(Math.abs(C.u * (c.ti - c.te)) <= 8) : "")
+            : gegL == null ? "" : okbad(C.u <= gegL || (bt.kern && kernLambda(C.L) <= 0.045));
+  const R = [];
+  const Ls = C.L.filter(l => l.d > 0);
+  R.push(res(`R<sub>T</sub>${C.inh ? " (Gefach)" : ""}`, "R<sub>si</sub> + Σ R + R<sub>se</sub>", `${f2(C.rsi)} + ${f3(C.sumR)} + ${f2(C.rse)}`, f3(C.rtG), "m²K/W"));
+  if (C.inh) {
+    const I = C.inh;
+    R.push(res("R'<sub>T</sub> (oberer Grenzwert)", "1 / Σ (f<sub>j</sub> / R<sub>T,j</sub>)", `1 / ${fx(1 / I.rUp, 5)}`, f3(I.rUp), "m²K/W"));
+    R.push(res("R''<sub>T</sub> (unterer Grenzwert)", "R<sub>si</sub> + Σ R'' + R<sub>se</sub>", `${f2(C.rsi)} + ${Ls.map(l => f3(I.inh.includes(l) ? l.Req : l.R)).join(" + ")} + ${f2(C.rse)}`, f3(I.rLo), "m²K/W"));
+    R.push(res("R<sub>T</sub>", "(R'<sub>T</sub> + R''<sub>T</sub>) / 2", `(${f3(I.rUp)} + ${f3(I.rLo)}) / 2`, f3(I.rt), "m²K/W"));
+    R.push(res("Fehler e", "(R'<sub>T</sub> − R''<sub>T</sub>) / (2 · R<sub>T</sub>)", `(${f3(I.rUp)} − ${f3(I.rLo)}) / (2 · ${f3(I.rt)})`, fx(I.e * 100, 1), "%", I.e <= 0.2 ? "ok" : "warn"));
+  }
+  R.push(res("U-Wert", "1 / R<sub>T</sub>", `1 / ${f3(C.rt)}` + (gegL != null ? ` · GEG-Grenzwert ${f2(gegL)}` : mode === "kuehl" ? " · Richtwert q ≤ 8 W/m²" : ""), f3(C.u), "W/(m²K)", uSt));
   if (c) {
-    const tl = c.pts.map((p, i) => i === 0
-      ? `θ<sub>si</sub> = θ<sub>i</sub> − q · R<sub>si</sub> = ${f1(c.ti)} − ${f2(c.q)} · ${f2(C.rsi)} = <b>${f1(p.t)} °C</b>`
-      : `θ<sub>${i}</sub> = ${f1(c.pts[i - 1].t)} − ${f2(c.q)} · ${f3(C.L[i - 1].R)} = <b>${f1(p.t)} °C</b> (nach „${C.L[i - 1].name}“)`);
-    h += step(`${n++}. Temperaturverlauf${C.inh ? " (Gefach)" : ""}: q = U · (θ<sub>i</sub> − θ<sub>e</sub>), je Schicht fällt die Temperatur um q · R`,
-      F(`q = ${f3(C.uG)} · (${f1(c.ti)} − ${br(c.te)}) = <b>${f2(c.q)}</b> W/m²`) + tl.map(F).join(""));
-
+    R.push(res(`q${C.inh ? " (Gefach)" : ""}`, "U · (θ<sub>i</sub> − θ<sub>e</sub>)", `${f3(C.uG)} · (${f1(c.ti)} − ${br(c.te)})`, f2(c.q), "W/m²"));
+    R.push(res("θ<sub>si</sub>", "θ<sub>i</sub> − q · R<sub>si</sub>", `${f1(c.ti)} − ${f2(c.q)} · ${f2(C.rsi)}`, f1(c.tsi), "°C", c.warmIn ? okbad(c.tsi > c.td) : ""));
+    R.push(res("θ<sub>se</sub>", "θ<sub>e</sub> + q · R<sub>se</sub>", `${f1(c.te)} + ${f2(c.q)} · ${f2(C.rse)}`, f1(c.tse), "°C", c.warmIn ? "" : okbad(c.tse > c.td)));
     const tw = c.warmIn ? c.ti : c.te, phw = c.warmIn ? c.phi : c.phe, pw = c.warmIn ? c.pi : c.pe, a = Math.log(pw / 610.5);
     const k = pw >= 610.5 ? ["237,3", "17,269"] : ["265,5", "21,875"];
-    const psw = ps(tw);
-    h += step(`${n++}. Taupunkt der warmen Seite (Magnus-Formel, DIN 4108-3)`,
-      F(`p<sub>s</sub>(${f1(tw)} °C) = 610,5 · e<sup>${tw >= 0 ? "17,269·θ/(237,3+θ)" : "21,875·θ/(265,5+θ)"}</sup> = ${fmt(psw, 0)} Pa`) +
-      F(`p = φ · p<sub>s</sub> = ${fx(phw / 100, 2)} · ${fmt(psw, 0)} = ${fmt(pw, 0)} Pa`) +
-      F(`θ<sub>s</sub> = ${k[0]} · ln(p/610,5) / (${k[1]} − ln(p/610,5)) = ${k[0]} · ${fx(a)} / (${k[1]} − ${fx(a)}) = <b>${f1(c.td)} °C</b>`));
-
-    if (c.mold) h += step(`${n++}. Schimmel-Check nach DIN 4108-2 (R<sub>si</sub> = 0,25)`,
-      F(`R<sub>T</sub>' = R<sub>T</sub> − R<sub>si</sub> + 0,25 = ${f3(C.rtG)} − ${f2(C.rsi)} + 0,25 = ${f3(c.mold.rt25)} m²K/W`) +
-      F(`f<sub>Rsi</sub> = 1 − 0,25 / R<sub>T</sub>' = 1 − 0,25 / ${f3(c.mold.rt25)} = <b>${fx(c.mold.frsi, 3)}</b> (Anforderung ≥ 0,70)`) +
-      F(`θ<sub>si</sub> = θ<sub>e</sub> + f<sub>Rsi</sub> · (θ<sub>i</sub> − θ<sub>e</sub>) = ${f1(c.te)} + ${fx(c.mold.frsi, 3)} · ${f1(c.ti - c.te)} = <b>${f1(c.mold.tsi25)} °C</b>`));
-
-    if (g) h += step(`${n++}. Glaser: s<sub>d</sub> = μ · d und Dampfdrücke`,
-      Ls.map(l => F(`${l.name}: s<sub>d</sub> = ${fx(l.mu, 0)} · ${fx(l.d / 100)} m = ${fmtSd(l.sd)} m`)).join("") +
-      (g.vent ? F(`Belüftete Luftschicht („${g.vent}“): nur die Schichten innerhalb davon zählen, in der Luftschicht gilt p<sub>e</sub>.`) : "") +
-      F(`Σ s<sub>d</sub> = ${fmtSd(g.S)} m · p<sub>i</sub> = ${fmt(c.pi, 0)} Pa · p<sub>e</sub> = ${fmt(c.pe, 0)} Pa`) +
-      (g.planes.length
-        ? g.planes.map(p => F(`Tauwasser zwischen „${p.a}“ und „${p.b}“: g = δ<sub>0</sub> · (Δp<sub>zu</sub>/s<sub>d,zu</sub> − Δp<sub>ab</sub>/s<sub>d,ab</sub>) · t = <b>${fmt(p.mass * 1000, 0)} g/m²</b>`)).join("") +
-          F(`M<sub>T</sub> = <b>${fmt(g.MT, 3)} kg/m²</b>${g.MV != null ? ` · M<sub>V</sub> = ${fmt(g.MV, 3)} kg/m²` : ""}`)
-        : F(`Die Gerade von p<sub>i</sub> nach p<sub>e</sub> bleibt überall unter p<sub>s</sub> → kein Tauwasser.`)));
+    R.push(res(`p<sub>s</sub> (${f1(tw)} °C)`, tw >= 0 ? "610,5 · e<sup>17,269·θ/(237,3+θ)</sup>" : "610,5 · e<sup>21,875·θ/(265,5+θ)</sup>", `θ = ${f1(tw)} °C`, fmt(ps(tw), 0), "Pa"));
+    R.push(res("p (Dampfteildruck)", "φ · p<sub>s</sub>", `${fx(phw / 100, 2)} · ${fmt(ps(tw), 0)}`, fmt(pw, 0), "Pa"));
+    R.push(res("Taupunkt θ<sub>s</sub>", `${k[0]} · ln(p/610,5) / (${k[1]} − ln(p/610,5))`, `${k[0]} · ${fx(a)} / (${k[1]} − ${fx(a)})`, f1(c.td), "°C"));
+    if (c.mold) {
+      R.push(res("R<sub>T</sub>' (R<sub>si</sub> = 0,25)", "R<sub>T</sub> − R<sub>si</sub> + 0,25", `${f3(C.rtG)} − ${f2(C.rsi)} + 0,25`, f3(c.mold.rt25), "m²K/W"));
+      R.push(res("f<sub>Rsi</sub> (≥ 0,70)", "1 − 0,25 / R<sub>T</sub>'", `1 − 0,25 / ${f3(c.mold.rt25)}`, fx(c.mold.frsi, 3), "–", okbad(c.mold.frsi >= 0.7)));
+      R.push(res("θ<sub>si</sub> (R<sub>si</sub> = 0,25)", "θ<sub>e</sub> + f<sub>Rsi</sub> · (θ<sub>i</sub> − θ<sub>e</sub>)", `${f1(c.te)} + ${fx(c.mold.frsi, 3)} · ${f1(c.ti - c.te)}`, f1(c.mold.tsi25), "°C", okbad(c.mold.frsi >= 0.7)));
+    }
+    if (g) {
+      R.push(res("Tauwasser M<sub>T</sub>", "Σ δ<sub>0</sub> · (Δp<sub>zu</sub>/s<sub>d,zu</sub> − Δp<sub>ab</sub>/s<sub>d,ab</sub>) · t",
+        g.planes.length ? `${g.planes.length} Tauwasserebene(n), t = ${fmt(g.hours / 24, 0)} Tage` : "Gerade p<sub>i</sub> → p<sub>e</sub> bleibt unter p<sub>s</sub>",
+        fmt(g.MT, 3), "kg/m²", okbad(mode === "kuehl" ? g.MT <= 0.01 : g.MT <= 1.0)));
+      if (g.MV != null) R.push(res("Verdunstung M<sub>V</sub>", "δ<sub>0</sub> · Δp · (1/s<sub>d,innen</sub> + 1/s<sub>d,außen</sub>) · t", "90 Tage, 12 °C, 70 % (vereinfacht)", fmt(g.MV, 3), "kg/m²", okbad(g.MV >= g.MT)));
+    }
   }
-
-  if (s) h += step(`${n++}. Sommerlicher Wärmeschutz (DIN EN ISO 13786, Periode T = 24 h)`,
-    s.layers.map(x => F(`${x.name}: δ = √(λ·T / (π·ρ·c)) = ${fx(x.delta * 100, 1)} cm (ρ = ${fx(x.rho, 0)} kg/m³, c = ${fx(x.cap, 0)} J/(kgK)) → ξ = d/δ = ${fx(x.xi, 3)}`)).join("") +
-    F(`Matrix Innenluft → Außenoberfläche: M = Z<sub>n</sub> · … · Z<sub>1</sub> · Z<sub>si</sub> → |M<sub>12</sub>| = ${f3(s.m12abs)} m²K/W`) +
-    F(`TAV = R<sub>si</sub> / |M<sub>12</sub>| = ${f2(C.rsi)} / ${f3(s.m12abs)} = <b>${fx(s.tav, 3)}</b> → Dämpfung 1/TAV = ${fmt(1 / s.tav, 0)}`) +
-    F(`Phasenverschiebung η = (arg M<sub>12</sub> − π) · 24 h / 2π = <b>${f1(s.eta)} h</b>`) +
-    F(`Luft → Luft (DIN EN ISO 13786): Abminderungsfaktor f = 1 / (U · |Z<sub>12</sub>|) = ${f2(s.fdec)} · Zeitverschiebung Δt = <b>${f1(s.tshift)} h</b>`));
+  if (s) {
+    const dampSt = 1 / s.tav >= 20 ? "ok" : "warn";
+    R.push(res("TAV", "R<sub>si</sub> / |M<sub>12</sub>|", `${f2(C.rsi)} / ${f3(s.m12abs)}`, fx(s.tav, 3), "–", dampSt));
+    R.push(res("Amplitudendämpfung", "1 / TAV", `1 / ${fx(s.tav, 3)} · gut ab 20`, fmt(1 / s.tav, 0), "–", dampSt));
+    R.push(res("Phasenverschiebung η", "(arg M<sub>12</sub> − π) · 24 h / 2π", "Oberfläche → Oberfläche · ideal 10–12 h", f1(s.eta), "h", s.eta >= 10 ? "ok" : "warn"));
+    R.push(res("Abminderungsfaktor f", "1 / (U · |Z<sub>12</sub>|)", "Luft → Luft (DIN EN ISO 13786)", f2(s.fdec), "–"));
+    R.push(res("Zeitverschiebung Δt", "(arg Z<sub>12</sub> − π) · 24 h / 2π", "Luft → Luft (DIN EN ISO 13786)", f1(s.tshift), "h"));
+  }
+  h += sheet("Blatt 5 – Ergebnisse mit Formel und eingesetzten Zahlen", "#16a34a", ["Größe", "Formel / eingesetzt", "Ergebnis", "Einheit"], R,
+    { cls: ["", "", "n", ""], w: ["26%", "44%", "16%", "14%"], note: "Ergebnisfarbe: grün = erfüllt, rot = nicht erfüllt, gelb = mittel / Hinweis, grau = reiner Rechenwert" });
 
   $("rw").innerHTML = h;
 }
@@ -1538,8 +1680,8 @@ function renderStandards(u, rt, L) {
 
 // Wärmedurchlasswiderstand ruhender Luftschichten nach DIN EN ISO 6946 (Tabelle, linear interpoliert).
 // Richtung des Wärmestroms aus Rsi: 0,10 aufwärts, 0,13 horizontal, 0,17 abwärts
-function airR(dcm) {
-  const mm = dcm * 10, rsi = parseFloat($("rsi").value) || 0.13;
+function airR(dcm, rsi = parseFloat($("rsi").value) || 0.13) {
+  const mm = dcm * 10;
   const D = [0, 5, 7, 10, 15, 25, 50, 100, 300];
   const T = rsi < 0.115 ? [0, 0.11, 0.13, 0.15, 0.16, 0.16, 0.16, 0.16, 0.16]   // aufwärts
           : rsi > 0.15  ? [0, 0.11, 0.13, 0.15, 0.17, 0.19, 0.21, 0.22, 0.23]   // abwärts

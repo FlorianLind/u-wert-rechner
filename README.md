@@ -8,7 +8,8 @@ Webbasierter Rechner für Lernzwecke (Techniker-Schule): U-Wert, Temperaturverla
 
 - Schichtaufbau mit Suche, farbigen Kategorien, λ- und μ-Werten, Verschieben per Drag & Drop
 - U-Wert nach DIN EN ISO 6946 – Luftschichten nach Tabellenwerten, **Holzanteil** (Sparren/Ständer) als inhomogenes Bauteil (oberer/unterer Grenzwert)
-- **Rechenweg** mit allen eingesetzten Zahlen
+- **Rechenweg** als farbige Tabellen wie in Excel (Wärmeschutz, Holzanteil, Glaser, Sommer, Ergebnisse) mit allen eingesetzten Zahlen
+- Bauteil-Auswahl nach Kategorie sortiert, innerhalb **von schlecht nach gut** mit Ampel (🔴 🟠 🟡 🟢)
 - Temperaturverlauf, Taupunkt, Schimmel-Check nach DIN 4108-2 (R<sub>si</sub> = 0,25)
 - Tauwassernachweis nach Glaser (vereinfacht, DIN 4108-3)
 - **Sommerlicher Wärmeschutz**: Phasenverschiebung, TAV, Abminderungsfaktor und Zeitverschiebung nach DIN EN ISO 13786
