@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U-Wert-Rechner</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1d2330; --muted:#6b7280; --line:#e3e6eb; --acc:#2563eb; --ok:#15803d; --bad:#b91c1c; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.45 system-ui, "Segoe UI", sans-serif; background:var(--bg); color:var(--ink); }
+  .wrap { max-width:1340px; margin:0 auto; padding:24px 16px 48px; display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:20px; align-items:start; }
+  @media (max-width:1080px) { .wrap { grid-template-columns:1fr; } aside { position:static !important; } }
+  h1 { margin:0 0 4px; font-size:24px; }
+  h2 { margin:0 0 12px; font-size:18px; }
+  .sub { color:var(--muted); margin:0 0 14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  label { font-size:13px; color:var(--muted); display:block; margin-bottom:4px; }
+  select, input { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:#fff; width:100%; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; }
+  .row > div { flex:1 1 150px; }
+  .tbl { max-width:100%; }
+  table.lay { width:100%; border-collapse:collapse; }
+  table.lay th, table.lay td { padding:6px 5px; border-bottom:1px solid var(--line); text-align:left; }
+  th { font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.02em; white-space:nowrap; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  td input.small { width:84px; text-align:right; }
+  td input.small.mu { width:96px; }
+  button { font:inherit; cursor:pointer; border:1px solid var(--line); background:#fff; border-radius:6px; padding:6px 12px; color:var(--ink); }
+  button.primary { background:var(--acc); color:#fff; border-color:var(--acc); }
+  button.x { padding:4px 9px; color:var(--bad); }
+  button.mv { padding:4px 7px; color:var(--muted); }
+  button.mv:disabled { opacity:.3; cursor:default; }
+  td.acts { white-space:nowrap; }
+  .grip { cursor:grab; color:var(--muted); padding:0 6px 0 0; user-select:none; font-size:16px; }
+  tr.dragging { opacity:.4; background:#eef2ff; }
+  .result { display:flex; gap:24px; flex-wrap:wrap; align-items:center; }
+  .big { font-size:44px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .big small { font-size:16px; font-weight:500; color:var(--muted); }
+  .badge { display:inline-block; padding:4px 10px; border-radius:99px; font-weight:600; font-size:13px; margin:2px 4px 2px 0; }
+  .badge.ok { background:#dcfce7; color:var(--ok); }
+  .badge.bad { background:#fee2e2; color:var(--bad); }
+  .badge.na { background:#eef0f3; color:#374151; }
+  .badge.warn { background:#fef3c7; color:#92400e; }
+  .kv { color:var(--muted); font-size:14px; }
+  .kv b { color:var(--ink); font-variant-numeric:tabular-nums; }
+  .stack { display:flex; height:56px; border-radius:6px; overflow:hidden; border:1px solid var(--line); margin-top:14px; }
+  .stack div { display:flex; align-items:center; justify-content:center; font-size:11px; color:#1d2330; overflow:hidden; white-space:nowrap; border-right:1px solid rgba(0,0,0,.15); }
+  .stack .side { background:#eef0f3; color:var(--muted); flex:0 0 64px; }
+  .note { font-size:12px; color:var(--muted); margin-top:10px; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--muted); margin-top:6px; }
+  .legend span::before { content:""; display:inline-block; width:18px; height:0; border-top:3px solid var(--c); vertical-align:middle; margin-right:6px; }
+  .legend span.dash::before { border-top-style:dashed; border-top-width:2px; }
+  table.mini { border-collapse:collapse; margin:8px 0; font-size:14px; }
+  table.mini th, table.mini td { padding:4px 10px 4px 0; border-bottom:1px solid var(--line); text-align:left; }
+
+  /* Betriebsfall-Umschalter */
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff; }
+  .seg button { border:0; border-radius:0; padding:8px 16px; }
+  .seg button + button { border-left:1px solid var(--line); }
+  .seg button.on { background:var(--acc); color:#fff; }
+
+  /* Hilfe */
+  .info { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%;
+          background:#e0e7ff; color:#3730a3; font:700 10px/1 Georgia, serif; font-style:italic; cursor:help;
+          margin-left:5px; vertical-align:1px; text-transform:none; letter-spacing:0; flex:none; }
+  .info:hover { background:#3730a3; color:#fff; }
+  #tip { position:fixed; z-index:100; max-width:290px; background:#1d2330; color:#fff; font-size:12.5px; line-height:1.4;
+         padding:7px 10px; border-radius:6px; pointer-events:none; box-shadow:0 6px 18px #0004; }
+  aside { position:sticky; top:16px; }
+  aside .card { border-left:4px solid #6366f1; }
+  #hTitle { margin:0 0 8px; font-size:16px; }
+  #hBody { font-size:14px; }
+  #hBody p { margin:0 0 8px; }
+  #hBody ol, #hBody ul { padding-left:20px; margin:0 0 8px; }
+  #hBody li { margin-bottom:4px; }
+  .muted { color:var(--muted); font-size:13px; }
+  #hReset { margin-top:6px; font-size:13px; padding:4px 10px; }
+
+  /* Baustoff-Auswahl */
+  .matbtn { width:100%; min-width:0; display:flex; align-items:center; gap:8px; text-align:left; padding:6px 8px; }
+  .matbtn .mn { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .matbtn .car { color:var(--muted); }
+  .sw { width:14px; height:14px; border-radius:3px; border:1px solid #0003; flex:none; display:inline-block; }
+  #picker { position:absolute; z-index:50; width:440px; max-width:calc(100vw - 16px); background:#fff; border:1px solid var(--line);
+            border-radius:10px; box-shadow:0 12px 32px #0003; padding:8px; }
+  #psearch { margin-bottom:8px; }
+  #pchips { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:6px; }
+  .chip { font-size:12px; padding:2px 9px; border-radius:99px; border:1.5px solid var(--c, #9ca3af); background:#fff; }
+  .chip.on { background:color-mix(in srgb, var(--c, #9ca3af) 28%, white); font-weight:600; }
+  #plist { max-height:320px; overflow:auto; }
+  .pg { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink);
+        padding:4px 8px; margin:8px 0 2px; border-left:5px solid var(--c); background:color-mix(in srgb, var(--c) 12%, white); border-radius:3px; }
+  .pi { display:flex; align-items:center; gap:8px; padding:5px 8px; border-radius:6px; cursor:pointer; }
+  .pi .pl { margin-left:auto; color:var(--muted); font-variant-numeric:tabular-nums; font-size:12px; white-space:nowrap; }
+  .pi.hl, .pi:hover { background:#eef2ff; }
+  .pi.cur { font-weight:600; }
+  .pe { padding:10px; color:var(--muted); }
+
+  /* Bauteil-Zeichnung */
+  .bt-card { display:grid; grid-template-columns:minmax(240px, 400px) 1fr; gap:18px; align-items:center; }
+  @media (max-width:760px) { .bt-card { grid-template-columns:1fr; } }
+  .dsvg { width:100%; display:block; }
+  .dsvg [data-pick] { cursor:pointer; }
+  .dsvg [data-pick] > :not(title) { fill:var(--pf); transition:fill .15s; }
+  .dsvg [data-pick]:hover > :not(title) { fill:#f59e0b; }
+  .dsvg [data-pick].sel > :not(title) { fill:#2563eb; }
+  .dsvg text { font:11px system-ui, sans-serif; fill:#374151; pointer-events:none; }
+  .dsvg text.s { font-size:10px; fill:#6b7280; }
+  .cap { text-align:center; margin-top:4px; }
+
+  /* Einordnung */
+  .scale { position:relative; height:28px; margin:58px 10px 58px; }
+  .sbar { position:absolute; left:0; right:0; top:8px; height:12px; border-radius:99px;
+          background:linear-gradient(90deg, #7c3aed, #16a34a 38%, #eab308 62%, #dc2626); }
+  .tick { position:absolute; top:0; height:28px; width:2px; background:var(--c); transform:translateX(-1px); }
+  .tick span { position:absolute; left:50%; transform:translateX(-50%); font-size:11px; font-weight:700; color:var(--c); white-space:nowrap; }
+  .ax { position:absolute; top:30px; transform:translateX(-50%); font-size:10px; color:var(--muted); }
+  .cur { position:absolute; top:-4px; height:36px; width:4px; background:#111827; border-radius:2px; transform:translateX(-2px); }
+  .cur span { position:absolute; top:52px; left:50%; transform:translateX(-50%); background:#111827; color:#fff; font-size:12px;
+              padding:2px 9px; border-radius:99px; white-space:nowrap; }
+  .srow { display:grid; grid-template-columns:12px minmax(0,1.7fr) 80px 190px minmax(0,1.3fr) minmax(0,1.1fr); gap:10px;
+          align-items:center; padding:7px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .srow.sh { font-size:12px; color:var(--muted); font-weight:600; }
+  .dot { width:12px; height:12px; border-radius:50%; }
+  .tag { font-size:11px; padding:1px 7px; border-radius:99px; background:#eef0f3; color:#374151; margin-left:4px; white-space:nowrap; }
+  .src { font-size:12px; }
+  .src a, .note a, #hBody a { color:var(--acc); }
+
+  /* Kein horizontales Scrollen: bei wenig Platz werden Tabellen zu Karten */
+  .wrap { overflow-x:clip; }
+  main { container-type:inline-size; min-width:0; }
+  table.lay td:nth-child(2) { width:36%; }
+  .src, .note, #hBody, .srow > span { overflow-wrap:anywhere; }
+  table.mini { width:100%; }
+  @container (max-width: 860px) {
+    table.lay, table.lay tbody { display:block; }
+    table.lay thead { display:none; }
+    table.lay tr { display:grid; grid-template-columns:auto repeat(3, minmax(0,1fr)); gap:8px 10px; padding:10px 0;
+                   grid-template-areas:"idx mat mat mat" "idx lam mu d" "idx r sd acts"; border-bottom:1px solid var(--line); }
+    table.lay td { display:block; padding:0; border:0; width:auto !important; text-align:left; }
+    table.lay td:nth-child(1) { grid-area:idx; padding-top:8px; }
+    table.lay td:nth-child(2) { grid-area:mat; }
+    table.lay td:nth-child(3) { grid-area:lam; }
+    table.lay td:nth-child(4) { grid-area:mu; }
+    table.lay td:nth-child(5) { grid-area:d; }
+    table.lay td:nth-child(6) { grid-area:r; }
+    table.lay td:nth-child(7) { grid-area:sd; }
+    table.lay td:nth-child(8) { grid-area:acts; align-self:end; text-align:right; white-space:normal; }
+    table.lay td:nth-child(n+3):nth-child(-n+7)::before { display:block; font-size:11px; color:var(--muted); margin-bottom:2px; }
+    table.lay td:nth-child(3)::before { content:"λ [W/mK]"; }
+    table.lay td:nth-child(4)::before { content:"μ [–]"; }
+    table.lay td:nth-child(5)::before { content:"d [cm]"; }
+    table.lay td:nth-child(6)::before { content:"R [m²K/W]"; }
+    table.lay td:nth-child(7)::before { content:"sd [m]"; }
+    td input.small, td input.small.mu { width:100%; text-align:left; }
+
+    .srow.sh { display:none; }
+    .srow { grid-template-columns:12px minmax(0,1fr) auto; grid-template-areas:"dot name name" ". lim st" ". dd dd" ". src src"; row-gap:4px; }
+    .srow > :nth-child(1) { grid-area:dot; }
+    .srow > :nth-child(2) { grid-area:name; font-weight:600; }
+    .srow > :nth-child(3) { grid-area:lim; }
+    .srow > :nth-child(3)::before { content:"U "; }
+    .srow > :nth-child(4) { grid-area:st; }
+    .srow > :nth-child(5) { grid-area:dd; font-size:13px; }
+    .srow > :nth-child(5)::before { content:"Zusatzdämmung: "; color:var(--muted); }
+    .srow > :nth-child(6) { grid-area:src; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<main>
+  <h1>U-Wert-Rechner</h1>
+  <p class="sub">U = 1 / (R<sub>si</sub> + Σ d/λ + R<sub>se</sub>) · Temperaturverlauf · Taupunkt · Tauwasser nach Glaser (vereinfacht nach DIN EN ISO 6946 / DIN 4108-3)</p>
+
+  <div style="margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+    <div class="seg" id="mode">
+      <button data-mode="haus" class="on">🏠 Beheiztes Gebäude</button>
+      <button data-mode="kuehl">❄️ Kühlzelle</button>
+    </div>
+    <i class="info" data-help="mode">i</i>
+  </div>
+
+  <div class="card bt-card">
+  <div>
+    <div id="drawing"></div>
+    <div class="muted cap">👆 Bauteil in der Zeichnung anklicken <i class="info" data-help="drawing">i</i></div>
+  </div>
+  <div class="row">
+    <div style="flex:2 1 220px">
+      <label for="bauteil">Bauteil <i class="info" data-help="bauteil">i</i></label>
+      <select id="bauteil" data-help="bauteil"></select>
+    </div>
+    <div>
+      <label for="rsi">R<sub>si</sub> [m²K/W] <i class="info" data-help="rsi">i</i></label>
+      <input id="rsi" type="number" step="0.01" data-help="rsi">
+    </div>
+    <div>
+      <label for="rse">R<sub>se</sub> [m²K/W] <i class="info" data-help="rse">i</i></label>
+      <input id="rse" type="number" step="0.01" data-help="rse">
+    </div>
+    <div style="align-self:end;flex:0 0 auto">
+      <button id="preset" data-help="bauteil">Beispielaufbau laden</button>
+    </div>
+  </div>
+  </div>
+
+  <div class="card">
+    <div class="tbl">
+      <table class="lay">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Baustoff (<span id="dirLabel">innen → außen</span>) <i class="info" data-help="schichten">i</i></th>
+            <th class="num">λ [W/mK] <i class="info" data-help="lambda">i</i></th>
+            <th class="num">μ [–] <i class="info" data-help="mu">i</i></th>
+            <th class="num">d [cm] <i class="info" data-help="d">i</i></th>
+            <th class="num">R [m²K/W] <i class="info" data-help="R">i</i></th>
+            <th class="num">s<sub>d</sub> [m] <i class="info" data-help="sd">i</i></th>
+            <th><i class="info" data-help="move">i</i></th>
+          </tr>
+        </thead>
+        <tbody id="layers"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px"><button class="primary" id="add">+ Schicht hinzufügen</button></div>
+  </div>
+
+  <div class="card">
+    <div class="result">
+      <div class="big" id="u" data-help="u">–</div>
+      <div>
+        <div class="kv">U-Wert <i class="info" data-help="u">i</i> &nbsp; R<sub>T</sub> = <b id="rt">–</b> m²K/W <i class="info" data-help="rges">i</i></div>
+        <div class="kv">Dicke gesamt = <b id="dt">–</b> cm &nbsp;·&nbsp; s<sub>d</sub> gesamt = <b id="sdt">–</b> m <i class="info" data-help="sd">i</i></div>
+        <div style="margin-top:6px"><span id="geg"></span><i class="info" id="gegInfo" data-help="geg">i</i></div>
+      </div>
+    </div>
+    <div class="stack" id="stack"></div>
+  </div>
+
+  <div class="card">
+    <h2>Einordnung: Baustandards &amp; Förderung <i class="info" data-help="std">i</i></h2>
+    <div id="stdBody"></div>
+    <div class="note"><b>Quellen:</b>
+      <a href="https://www.gesetze-im-internet.de/geg/anlage_7.html" target="_blank" rel="noopener">GEG Anlage 7</a> (Höchstwerte bei Änderung bestehender Gebäude) ·
+      <a href="https://www.gesetze-im-internet.de/geg/anlage_1.html" target="_blank" rel="noopener">GEG Anlage 1</a> (Referenzgebäude Wohngebäude) ·
+      BEG EM – Technische Mindestanforderungen (<a href="https://www.bafa.de/SharedDocs/Downloads/DE/Energie/beg_liste_technische_faq.pdf?__blob=publicationFile&amp;v=8" target="_blank" rel="noopener">BAFA, technische FAQ</a>; Werteübersicht: <a href="https://www.lampeundteam.de/foerder-uwerte.html" target="_blank" rel="noopener">lampeundteam.de</a>) ·
+      <a href="https://www.iwu.de/publikationen/fachinformationen/gebaeudetypologie/" target="_blank" rel="noopener">IWU Deutsche Wohngebäudetypologie</a> (typische U-Werte EFH; <a href="https://www.heizlast.de/images/stories/heizlastberechnung/U-WerteGebudetypologie.pdf" target="_blank" rel="noopener">Tabelle</a>) ·
+      <a href="https://passipedia.de/planung/sanierung_mit_passivhaus_komponenten/planungsempfehlungen_und_zertifizierung_von_innendaemmsystemen" target="_blank" rel="noopener">Passipedia / Passivhaus Institut</a>.
+      Förderbedingungen ändern sich häufig – vor einem Antrag die aktuelle Fassung bei BAFA/KfW prüfen.</div>
+  </div>
+
+  <div class="card">
+    <h2>Klima, Temperaturverlauf &amp; Taupunkt <i class="info" data-help="taupunkt">i</i></h2>
+    <div class="row">
+      <div><label for="ti"><span id="lblTi">Innentemperatur θ<sub>i</sub></span> [°C] <i class="info" data-help="ti">i</i></label><input id="ti" type="number" step="0.5" data-help="ti"></div>
+      <div><label for="phi"><span id="lblPhi">rel. Feuchte innen φ<sub>i</sub></span> [%] <i class="info" data-help="phi">i</i></label><input id="phi" type="number" step="1" min="1" max="100" data-help="phi"></div>
+      <div><label for="te"><span id="lblTe">Außentemperatur θ<sub>e</sub></span> [°C] <i class="info" data-help="te">i</i></label><input id="te" type="number" step="0.5" data-help="te"></div>
+      <div><label for="phe"><span id="lblPhe">rel. Feuchte außen φ<sub>e</sub></span> [%] <i class="info" data-help="phe">i</i></label><input id="phe" type="number" step="1" min="1" max="100" data-help="phe"></div>
+    </div>
+    <div class="result" style="margin-top:14px;gap:24px">
+      <div class="kv">Taupunkt θ<sub>s</sub> (<span id="tdSide">innen</span>) = <b id="td">–</b> °C <i class="info" data-help="taupunkt">i</i></div>
+      <div class="kv">θ<sub>si</sub> = <b id="tsi">–</b> °C <i class="info" data-help="tsi">i</i></div>
+      <div class="kv">θ<sub>se</sub> = <b id="tse">–</b> °C <i class="info" data-help="tse">i</i></div>
+      <div class="kv">q = <b id="q">–</b> W/m² <i class="info" data-help="q">i</i></div>
+    </div>
+    <div id="dewmsg" style="margin-top:10px"></div>
+    <div class="tbl" style="margin-top:12px" data-help="tempchart"><svg id="chart" viewBox="0 0 700 260" style="width:100%;display:block"></svg></div>
+    <div class="legend"><span style="--c:#b91c1c">Temperatur</span><span class="dash" style="--c:#2563eb">Taupunkt der warmen Seite</span><span style="--c:#2563eb">Taupunktebene</span><i class="info" data-help="tempchart">i</i></div>
+  </div>
+
+  <div class="card">
+    <h2>Tauwasser nach Glaser <i class="info" data-help="glaser">i</i></h2>
+    <div class="row" style="align-items:end">
+      <div style="flex:0 1 220px"><label for="days">Dauer Tauperiode [Tage] <i class="info" data-help="days">i</i></label><input id="days" type="number" min="1" step="1" data-help="days"></div>
+      <div style="flex:0 0 auto"><button id="dinKlima" data-help="dinklima">Normklima setzen</button> <i class="info" data-help="dinklima">i</i></div>
+    </div>
+    <div id="glres" style="margin-top:12px"></div>
+    <div class="tbl" style="margin-top:8px" data-help="glaserchart"><svg id="gchart" viewBox="0 0 700 270" style="width:100%;display:block"></svg></div>
+    <div class="legend"><span style="--c:#b91c1c">Sättigungsdampfdruck p<sub>s</sub></span><span style="--c:#2563eb">Dampfteildruck p</span><span class="dash" style="--c:#9ca3af">p ohne Tauwasser</span><i class="info" data-help="glaserchart">i</i></div>
+    <div class="note">Vereinfachtes Glaser-Verfahren: stationäres Klima, Tauwasser nur an Schichtgrenzen, keine Kapillarleitung und keine Sorption. Für echte Nachweise DIN 4108-3 bzw. eine hygrothermische Simulation (z. B. WUFI) verwenden.</div>
+  </div>
+
+  <div class="card">
+    <div class="note" style="margin-top:0">λ- und μ-Werte sind typische Bemessungswerte (Richtwerte nach DIN 4108-4 / DIN EN ISO 10456) und können in der Tabelle überschrieben werden. Für Nachweise die Herstellerangaben verwenden. Hinterlüftete Schichten (z. B. Dachziegel, Vorhangfassade) nicht eintragen – dafür R<sub>se</sub> = R<sub>si</sub> setzen.</div>
+  </div>
+  <footer style="text-align:center;color:var(--muted);font-size:13px;padding:8px 0 0">Made by Florian Lind and Claude</footer>
+</main>
+
+<aside>
+  <div class="card">
+    <h3 id="hTitle"></h3>
+    <div id="hBody"></div>
+    <button id="hReset">↺ Kurzanleitung</button>
+  </div>
+</aside>
+</div>
+
+<div id="picker" hidden>
+  <input id="psearch" type="search" placeholder="Baustoff suchen … (z. B. putz, ziegel, 035)" autocomplete="off">
+  <div id="pchips"></div>
+  <div id="plist"></div>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+// ================= Baustoffe =================
+// [Kategorie, Kategoriefarbe, [[Name, λ, μ, Schichtfarbe], …]]
+const MATS = [
+  ["Putze & Mörtel", "#d9a441", [
+    ["Gipsputz", 0.51, 10, "#f1e9d8"], ["Putzmörtel aus Kalk", 1.00, 15, "#ede3cf"], ["Innenputz aus Kalkmörtel", 1.00, 15, "#efe6d2"],
+    ["Kalkzementputz (außen)", 1.00, 20, "#e2d8c3"], ["Außenputz aus Zementmörtel", 1.60, 25, "#cfc8b8"]]],
+  ["Platten & Beläge", "#7c8a9e", [
+    ["Gipskartonplatte", 0.25, 8, "#f5f0e6"], ["Gipsfaserplatte", 0.32, 13, "#efe7d8"], ["Fliesen/Keramik", 1.30, 200, "#cfd8dc"]]],
+  ["Mauerwerk & Beton", "#b45a2c", [
+    ["Stahlbeton", 2.50, 100, "#9ca3af"], ["Normalbeton (unbewehrt)", 2.00, 100, "#a8afb9"], ["Kalksandstein (ρ 1800)", 0.99, 15, "#d6d3cb"],
+    ["Kalkstein (Naturstein)", 1.40, 40, "#d8d2bf"], ["Vollziegel", 0.81, 10, "#c2703d"], ["Hohllochziegel (ρ 1200)", 0.50, 10, "#c87b48"],
+    ["Hochlochziegel", 0.39, 10, "#cc8452"], ["Wärmedämmziegel", 0.09, 10, "#d99a6c"],
+    ["Porenbeton", 0.11, 8, "#e7e5df"], ["Leichtbeton-Stein", 0.32, 10, "#bfbab0"], ["Vormauerziegel", 0.81, 10, "#b45309"], ["Klinker (Vollklinker)", 0.96, 50, "#9a3412"]]],
+  ["Estrich & Boden", "#57606f", [
+    ["Zementestrich", 1.40, 30, "#b8b8b0"], ["Anhydritestrich", 1.20, 20, "#c8c5ba"], ["Parkett / Holzdielen", 0.13, 40, "#b98b5a"]]],
+  ["Folien, Bahnen & Bleche", "#334155", [
+    ["Bitumenbahn / Abdichtung", 0.17, 50000, "#3f3f46"], ["PE-Folie (Dampfsperre)", 0.40, 250000, "#60a5fa"],
+    ["Dampfbremse (sd ≈ 2 m)", 0.20, 10000, "#93c5fd"], ["Alu-Dampfsperre (sd ≥ 1500 m)", 0.20, 7500000, "#94a3b8"],
+    ["Stahlblech (Paneel)", 50, 100000000, "#64748b"]]],
+  ["Holz & Holzwerkstoffe", "#8b5a2b", [
+    ["Nadelholz (KVH)", 0.13, 40, "#caa472"], ["OSB-Platte", 0.13, 200, "#d4b27a"], ["Spanplatte", 0.14, 50, "#d9bd8c"],
+    ["Holzfaserplatte (Unterdeckung)", 0.047, 5, "#b99a6a"]]],
+  ["Dämmstoffe", "#e3b505", [
+    ["Mineralwolle WLS 035", 0.035, 1, "#f6e27a"], ["Mineralwolle WLS 040", 0.040, 1, "#f3dc6b"],
+    ["EPS WLS 040", 0.040, 50, "#f4f4f4"], ["EPS grau WLS 032", 0.032, 50, "#d9dce0"], ["XPS WLS 035", 0.035, 150, "#9fd3f0"],
+    ["PUR/PIR WLS 024", 0.024, 60, "#f2d49b"], ["Holzfaserdämmung", 0.040, 3, "#a9865a"], ["Zellulose", 0.040, 2, "#c9c0b1"],
+    ["Hanf / Flachs", 0.045, 2, "#b8b389"], ["Schaumglas", 0.045, 100000, "#555b66"], ["Trittschalldämmung", 0.040, 1, "#eaeaea"]]],
+  ["Einblasdämmung", "#0d9488", [
+    ["Zellulose-Einblasdämmung", 0.038, 1.5, "#c9c0b1"], ["Holzfaser-Einblasdämmung", 0.040, 2, "#a9865a"],
+    ["Glaswolle-Einblasdämmung", 0.035, 1, "#f6e27a"], ["Steinwolle-Einblasgranulat", 0.039, 1, "#b5b58a"],
+    ["EPS-Dämmperlen grau (Kerndämmung)", 0.033, 3, "#d9dce0"], ["Perlite hydrophobiert (Kerndämmung)", 0.050, 3, "#e8e4da"]]],
+  ["Sonstiges", "#6366f1", [
+    ["Luftschicht, ruhend", null, 1, "#e0f2fe", { air:1 }],
+    ["Luftschicht, schwach belüftet", null, 1, "#f0f9ff", { air:0.5 }],
+    ["Eigener Wert …", null, null, "#c7d2fe"]]]
+];
+const MAT = {};
+MATS.forEach(([g, gc, list]) => list.forEach(([n, l, mu, c, o]) => MAT[n] = { l, mu, c, g, gc, ...o }));
+
+// ================= Bauteile =================
+// cat = Bauteilkategorie für Grenzwerte/Zeichnung, grp = Gruppe in der Auswahlliste
+const BT_HAUS = {
+  "Außenwand":                         { cat:"wand", rsi:0.13, rse:0.04,
+    preset:[["Gipsputz",1.5],["Kalksandstein (ρ 1800)",17.5],["Mineralwolle WLS 035",16],["Kalkzementputz (außen)",1]] },
+  "Holzständerwand (außen)":           { cat:"wand", rsi:0.13, rse:0.04,
+    preset:[["Gipskartonplatte",1.25],["OSB-Platte",1.5],["Mineralwolle WLS 035",16],["Holzfaserplatte (Unterdeckung)",6],["Kalkzementputz (außen)",0.8]] },
+  "Steildach (Zwischensparren)":       { cat:"steil", rsi:0.10, rse:0.10,
+    preset:[["Gipskartonplatte",1.25],["Dampfbremse (sd ≈ 2 m)",0.02],["Mineralwolle WLS 035",20],["Holzfaserplatte (Unterdeckung)",6]] },
+  "Flachdach":                         { cat:"flach", rsi:0.10, rse:0.04,
+    preset:[["Gipsputz",1],["Stahlbeton",20],["Alu-Dampfsperre (sd ≥ 1500 m)",0.02],["PUR/PIR WLS 024",16],["Bitumenbahn / Abdichtung",1]] },
+  "Oberste Geschossdecke":             { cat:"ogd", rsi:0.10, rse:0.10,
+    preset:[["Gipsputz",1],["Stahlbeton",18],["Mineralwolle WLS 035",20],["OSB-Platte",2.2]] },
+  "Kellerdecke (gegen unbeheizt)":     { cat:"keller", rsi:0.17, rse:0.17,
+    preset:[["Parkett / Holzdielen",1.5],["Zementestrich",5],["Trittschalldämmung",3],["Stahlbeton",18],["EPS WLS 040",10]] },
+  "Bodenplatte (gegen Erdreich)":      { cat:"boden", rsi:0.17, rse:0.00,
+    preset:[["Fliesen/Keramik",1],["Zementestrich",6],["EPS WLS 040",8],["Bitumenbahn / Abdichtung",0.5],["Stahlbeton",25],["XPS WLS 035",12]] },
+  "Innenwand":                         { cat:"innen", rsi:0.13, rse:0.13,
+    preset:[["Gipsputz",1.5],["Kalksandstein (ρ 1800)",11.5],["Gipsputz",1.5]] },
+  "Innenwand aus Kalkstein":           { cat:"innen", rsi:0.13, rse:0.13,
+    preset:[["Innenputz aus Kalkmörtel",1.5],["Kalkstein (Naturstein)",24],["Innenputz aus Kalkmörtel",1.5]] },
+
+  "Altbau-Außenwand Vollziegel 36,5 cm (unsaniert)": { grp:"Altbau", cat:"wand", rsi:0.13, rse:0.04,
+    preset:[["Innenputz aus Kalkmörtel",1.5],["Vollziegel",36.5],["Kalkzementputz (außen)",2]] },
+  "Altbau-Außenwand + 14 cm WDVS (saniert)":         { grp:"Altbau", cat:"wand", rsi:0.13, rse:0.04,
+    preset:[["Innenputz aus Kalkmörtel",1.5],["Vollziegel",36.5],["Kalkzementputz (außen)",2],["EPS grau WLS 032",14],["Kalkzementputz (außen)",1]] },
+  "Altbau-Steildach 6 cm Dämmung (1970er)":          { grp:"Altbau", cat:"steil", rsi:0.10, rse:0.10,
+    preset:[["Gipskartonplatte",1.25],["Mineralwolle WLS 040",6]] },
+  "Altbau-Kellerdecke Beton (unsaniert)":            { grp:"Altbau", cat:"keller", rsi:0.17, rse:0.17,
+    preset:[["Parkett / Holzdielen",2.4],["Zementestrich",4],["Stahlbeton",14]] },
+
+  "Zweischaliges Mauerwerk mit Luftschicht (vorher)":  { grp:"Einblasdämmung", cat:"wand", rsi:0.13, rse:0.04,
+    preset:[["Innenputz aus Kalkmörtel",1.5],["Kalksandstein (ρ 1800)",17.5],["Luftschicht, ruhend",6],["Vormauerziegel",11.5]] },
+  "Zweischaliges Mauerwerk + Kerndämmung (nachher)":  { grp:"Einblasdämmung", cat:"wand", kern:true, rsi:0.13, rse:0.04,
+    preset:[["Innenputz aus Kalkmörtel",1.5],["Kalksandstein (ρ 1800)",17.5],["EPS-Dämmperlen grau (Kerndämmung)",6],["Vormauerziegel",11.5]] },
+  "Holzbalkendecke, Zellulose eingeblasen (oberste Geschossdecke)": { grp:"Einblasdämmung", cat:"ogd", rsi:0.10, rse:0.10,
+    preset:[["Gipsputz",1.5],["Dampfbremse (sd ≈ 2 m)",0.02],["Zellulose-Einblasdämmung",22],["Holzfaserplatte (Unterdeckung)",2.2]] },
+  "Steildach, Holzfaser zwischen Sparren eingeblasen": { grp:"Einblasdämmung", cat:"steil", rsi:0.10, rse:0.10,
+    preset:[["Gipskartonplatte",1.25],["Dampfbremse (sd ≈ 2 m)",0.02],["Holzfaser-Einblasdämmung",24],["Holzfaserplatte (Unterdeckung)",6]] },
+  "Holzständerwand, Zellulose eingeblasen":            { grp:"Einblasdämmung", cat:"wand", rsi:0.13, rse:0.04,
+    preset:[["Gipskartonplatte",1.25],["OSB-Platte",1.5],["Zellulose-Einblasdämmung",20],["Holzfaserplatte (Unterdeckung)",6],["Kalkzementputz (außen)",0.8]] },
+
+  "Passivhaus-Außenwand (KS + 30 cm WDVS)":          { grp:"Passivhaus", cat:"wand", rsi:0.13, rse:0.04,
+    preset:[["Gipsputz",1.5],["Kalksandstein (ρ 1800)",17.5],["EPS grau WLS 032",30],["Kalkzementputz (außen)",1]] },
+  "Passivhaus-Dach (36 cm Zellulose)":               { grp:"Passivhaus", cat:"steil", rsi:0.10, rse:0.10,
+    preset:[["Gipskartonplatte",1.25],["OSB-Platte",1.5],["Zellulose",36],["Holzfaserplatte (Unterdeckung)",6]] },
+  "Passivhaus-Bodenplatte (30 cm XPS)":              { grp:"Passivhaus", cat:"boden", rsi:0.17, rse:0.00,
+    preset:[["Parkett / Holzdielen",1.5],["Zementestrich",6],["Trittschalldämmung",3],["Stahlbeton",25],["XPS WLS 035",30]] }
+};
+const BT_KUEHL = {
+  "Kühlzellen-Wand (Sandwichpaneel)":  { rsi:0.13, rse:0.13,
+    preset:[["Stahlblech (Paneel)",0.06],["PUR/PIR WLS 024",14],["Stahlblech (Paneel)",0.06]] },
+  "Kühlzellen-Decke (Sandwichpaneel)": { rsi:0.17, rse:0.17,
+    preset:[["Stahlblech (Paneel)",0.06],["PUR/PIR WLS 024",15],["Stahlblech (Paneel)",0.06]] },
+  "Kühlzellen-Boden (auf Bodenplatte)":{ rsi:0.10, rse:0.00,
+    preset:[["Fliesen/Keramik",1],["Zementestrich",8],["PE-Folie (Dampfsperre)",0.02],["XPS WLS 035",20],["Alu-Dampfsperre (sd ≥ 1500 m)",0.02],["Stahlbeton",20]] },
+  "Kühlraum massiv (Innendämmung)":    { rsi:0.13, rse:0.13,
+    preset:[["Stahlblech (Paneel)",0.06],["PUR/PIR WLS 024",14],["Alu-Dampfsperre (sd ≥ 1500 m)",0.02],["Kalksandstein (ρ 1800)",17.5],["Gipsputz",1.5]] }
+};
+const MODES = {
+  haus:  { bt:BT_HAUS,  ti:20,  phi:50, te:-5, phe:80, days:90,  inn:"innen", aus:"außen",
+           lbl:{ ti:"Innentemperatur θ<sub>i</sub>", phi:"rel. Feuchte innen φ<sub>i</sub>", te:"Außentemperatur θ<sub>e</sub>", phe:"rel. Feuchte außen φ<sub>e</sub>" } },
+  kuehl: { bt:BT_KUEHL, ti:-20, phi:90, te:25, phe:60, days:365, inn:"Zelle", aus:"Umgebung",
+           lbl:{ ti:"Zellentemperatur θ<sub>i</sub>", phi:"rel. Feuchte Zelle φ<sub>i</sub>", te:"Umgebungstemperatur θ<sub>e</sub>", phe:"rel. Feuchte Umgebung φ<sub>e</sub>" } }
+};
+
+// ================= Hilfetexte =================
+const HELP = {
+  start: { t:"Kurzanleitung", l:`
+    <ol>
+      <li>Oben den <b>Betriebsfall</b> wählen: beheiztes Gebäude oder Kühlzelle.</li>
+      <li><b>Bauteil</b> wählen – ein typischer Beispielaufbau wird geladen.</li>
+      <li><b>Schichten</b> anpassen: Baustoff anklicken (mit Suche), Dicke eintragen, mit ⠿ ziehen oder ▲▼ verschieben.</li>
+      <li><b>Klima</b> eingeben: Temperaturen und Luftfeuchte beider Seiten.</li>
+      <li>Ergebnisse ablesen: <b>U-Wert</b>, <b>Temperaturverlauf &amp; Taupunkt</b>, <b>Tauwasser nach Glaser</b>.</li>
+    </ol>
+    <p class="muted">Fahre mit der Maus über ein <i class="info">i</i> für einen Kurztipp – hier rechts erscheint dann die ausführliche Erklärung. Auch beim Klick in ein Eingabefeld.</p>
+    <p><b>Faustregeln Feuchteschutz</b></p>
+    <ul>
+      <li><b>Beheizt:</b> innen dampfdichter als außen, Taupunkt möglichst weit außen in der Dämmung.</li>
+      <li><b>Kühlzelle:</b> Dampfsperre auf die warme <b>Außen</b>seite, praktisch dicht – Tauwasser trocknet dort nie aus.</li>
+    </ul>` },
+  mode: { t:"Betriebsfall", s:"Beheiztes Gebäude: innen warm. Kühlzelle: außen warm – der Dampf wandert umgekehrt.", l:`
+    <p><b>🏠 Beheiztes Gebäude:</b> Im Winter ist es innen warm und feucht. Wasserdampf wandert von innen nach außen – aber nur im Winter, im Sommer kann das Bauteil wieder austrocknen. Dampfbremse innen, Schichten nach außen immer diffusionsoffener.</p>
+    <p><b>❄️ Kühlzelle:</b> Innen kalt, außen (Umgebung) warm. Der Dampf wandert von außen nach innen – <b>ganzjährig</b>, ohne Austrocknungsphase. Die Dampfsperre gehört auf die warme Außenseite und muss praktisch dicht sein (Stahlblech, Alu, PE-Folie).</p>
+    <p>Der Umschalter setzt passende Bauteile, Klimawerte, Tauperiode und Bewertungen.</p>` },
+  bauteil: { t:"Bauteil", s:"Bauteilart – legt Rsi/Rse, Grenzwert und Beispielaufbau fest.", l:`
+    <p>Die Bauteilart bestimmt die <b>Wärmeübergangswiderstände</b> (je nach Richtung des Wärmestroms) und den Vergleichswert (GEG bzw. Kühlraum-Richtwert).</p>
+    <p>„Beispielaufbau laden“ setzt einen typischen Schichtaufbau, den du beliebig ändern kannst.</p>` },
+  rsi: { t:"Wärmeübergangswiderstand innen R<sub>si</sub>", s:"Widerstand beim Übergang Raumluft → Oberfläche [m²K/W].", l:`
+    <p>R<sub>si</sub> beschreibt, wie gut Wärme von der Raumluft an die Bauteiloberfläche übergeht (Konvektion + Strahlung).</p>
+    <ul><li>0,13 – Wärmestrom horizontal (Wände)</li><li>0,10 – Wärmestrom aufwärts (Dächer, Decken nach oben)</li><li>0,17 – Wärmestrom abwärts (Böden)</li></ul>
+    <p class="muted">Nach DIN EN ISO 6946. Für den Schimmelnachweis (DIN 4108-2) rechnet man mit R<sub>si</sub> = 0,25 – z. B. hinter Möbeln.</p>` },
+  rse: { t:"Wärmeübergangswiderstand außen R<sub>se</sub>", s:"Widerstand beim Übergang Oberfläche → Außenluft [m²K/W].", l:`
+    <p>Außen sorgt Wind für guten Wärmeübergang, deshalb ist R<sub>se</sub> klein:</p>
+    <ul><li>0,04 – Außenluft</li><li>0,00 – Erdreich</li><li>= R<sub>si</sub> – gegen unbeheizte Räume oder bei hinterlüfteten Bauteilen (die hinterlüftete Schicht wird dann nicht mitgerechnet)</li></ul>` },
+  schichten: { t:"Schichtaufbau", s:"Schichten immer von innen nach außen eingeben. Baustoff anklicken zum Suchen.", l:`
+    <p>Jede Zeile ist eine Schicht – Reihenfolge immer von <b>innen</b> (Raum bzw. Kühlzelle) nach <b>außen</b>.</p>
+    <p>Für den U-Wert ist die Reihenfolge egal – für Temperaturverlauf, Taupunkt und Glaser ist sie aber entscheidend!</p>
+    <p>Baustoff anklicken → Suche mit farbigen Kategorien und λ-Werten. λ und μ sind vorbelegt, lassen sich aber überschreiben.</p>` },
+  lambda: { t:"Wärmeleitfähigkeit λ", s:"λ in W/(m·K) – je kleiner, desto besser dämmt der Stoff.", l:`
+    <p>λ gibt an, wie viel Wärme (W) durch eine 1 m dicke Schicht bei 1 K Temperaturunterschied pro m² fließt.</p>
+    <ul><li>Dämmstoffe: 0,020 – 0,050</li><li>Holz: ≈ 0,13</li><li>Mauerwerk: 0,08 – 1,0</li><li>Beton: ≈ 2,0 – 2,5</li><li>Stahl: ≈ 50</li></ul>
+    <p class="muted">„WLS 035“ bedeutet λ = 0,035 W/(m·K).</p>` },
+  mu: { t:"Diffusionswiderstandszahl μ", s:"Wie viel dichter ein Stoff für Wasserdampf ist als Luft (Luft: μ = 1).", l:`
+    <p>μ ist dimensionslos und sagt, wie viel mal dichter der Baustoff für Wasserdampf ist als eine gleich dicke ruhende Luftschicht.</p>
+    <ul><li>Mineralwolle ≈ 1</li><li>Holzfaser ≈ 3–5</li><li>Ziegel ≈ 5–10</li><li>Kalksandstein ≈ 15–25</li><li>Beton ≈ 70–150</li><li>OSB ≈ 200</li><li>Bitumenbahn ≈ 50 000</li><li>Stahlblech, Glas: praktisch ∞</li></ul>
+    <p class="muted">DIN 4108-4 nennt oft einen Min-/Max-Wert; im Nachweis nimmt man den ungünstigeren. Hier ist ein typischer Wert vorbelegt.</p>` },
+  d: { t:"Schichtdicke d", s:"Dicke der Schicht in cm. Folien/Bleche als sehr dünne Schicht (z. B. 0,02 cm).", l:`
+    <p>Dicke in Zentimetern. Beispiele für dünne Schichten:</p>
+    <ul><li>PE-Folie: 0,02 cm (0,2 mm)</li><li>Dampfbremse: 0,02 cm</li><li>Stahlblech Paneel: 0,06 cm (0,6 mm)</li></ul>` },
+  R: { t:"Wärmedurchlasswiderstand R", s:"R = d / λ in m²K/W – je größer, desto besser dämmt die Schicht.", l:`
+    <p>R = d / λ (d in Metern!). Die R-Werte aller Schichten werden addiert. Beispiel: 16 cm Mineralwolle WLS 035 → R = 0,16 / 0,035 = 4,57 m²K/W.</p>` },
+  sd: { t:"Diffusionsäquivalente Luftschichtdicke s<sub>d</sub>", s:"sd = μ · d in m – Dampfdichtheit einer Schicht.", l:`
+    <p>s<sub>d</sub> ist die Dicke einer ruhenden Luftschicht mit demselben Dampfwiderstand wie die Bauteilschicht.</p>
+    <ul><li>s<sub>d</sub> ≤ 0,5 m: diffusionsoffen</li><li>0,5 m &lt; s<sub>d</sub> &lt; 1500 m: diffusionshemmend (Dampfbremse)</li><li>s<sub>d</sub> ≥ 1500 m: diffusionsdicht (Dampfsperre)</li></ul>
+    <p>Faustregel im beheizten Gebäude: Summe s<sub>d</sub> innenseitig der Dämmung deutlich größer als außenseitig.</p>` },
+  move: { t:"Schichten verschieben &amp; löschen", s:"▲/▼ verschiebt eine Position, am Griff ⠿ ziehen, ✕ löscht.", l:`
+    <p>▲ / ▼ verschiebt eine Schicht nach innen bzw. außen, am Griff ⠿ links kann man sie an jede Stelle ziehen.</p>
+    <p><b>Experiment:</b> Schiebe bei der Kühlzelle „Kühlraum massiv“ die PE-Folie ganz nach innen – im Glaser-Diagramm siehst du sofort, dass Tauwasser entsteht.</p>` },
+  u: { t:"U-Wert", s:"Wärmedurchgangskoeffizient in W/(m²K) – je kleiner, desto besser.", l:`
+    <p>Der U-Wert gibt an, wie viel Watt pro m² Bauteilfläche bei 1 K Temperaturunterschied verloren gehen: <b>U = 1 / R<sub>T</sub></b>.</p>
+    <ul><li>Ungedämmte Altbauwand: 1,0 – 1,5</li><li>GEG Sanierung Außenwand: ≤ 0,24</li><li>Passivhaus: ≈ 0,10 – 0,15</li><li>Tiefkühlzelle: ≈ 0,15 – 0,20</li></ul>` },
+  rges: { t:"Wärmedurchgangswiderstand R<sub>T</sub>", s:"RT = Rsi + Summe aller R + Rse.", l:`<p>R<sub>T</sub> ist der Gesamtwiderstand von Luft zu Luft. Der U-Wert ist sein Kehrwert.</p>` },
+  geg: { t:"Vergleichswert", s:"Beheizt: Höchstwert nach GEG Anlage 7. Kühlzelle: Wärmestrom-Richtwert.", l:`
+    <p><b>GEG Anlage 7</b> – Höchstwerte beim Erneuern von Bauteilen im Bestand:</p>
+    <ul><li>Außenwand: 0,24</li><li>Steildach / oberste Geschossdecke: 0,24</li><li>Flachdach: 0,20</li><li>Gegen Erdreich / unbeheizt: 0,30 W/(m²K)</li></ul>
+    <p class="muted">Neubauten werden über das Referenzgebäude nachgewiesen – die Werte liegen dort meist noch niedriger.</p>
+    <p><b>Kühlzelle:</b> Im Kühlraumbau legt man die Dämmdicke oft über den Wärmestrom fest: q = U · Δθ ≤ 8 W/m² (üblich 6–10 W/m²). Bei 45 K Temperaturdifferenz heißt das U ≤ 0,18 W/(m²K).</p>` },
+  ti: { t:"Temperatur innen", s:"Lufttemperatur im Raum bzw. in der Kühlzelle.", l:`
+    <ul><li>Normklima DIN 4108-3 (Tauperiode): 20 °C</li><li>Kühlraum: ca. 0 bis +8 °C</li><li>Tiefkühlzelle: −18 bis −25 °C</li></ul>` },
+  phi: { t:"Relative Luftfeuchte innen", s:"Relative Feuchte der Raum- bzw. Zellenluft in %.", l:`
+    <p>Temperatur und relative Feuchte bestimmen den Wasserdampf-Teildruck p = φ · p<sub>s</sub>(θ) und damit den Taupunkt.</p>
+    <ul><li>Wohnräume: 40–60 % (Normklima 50 %)</li><li>Kühlzellen: 85–95 % – wegen der tiefen Temperatur ist absolut aber kaum Wasser in der Luft.</li></ul>` },
+  te: { t:"Temperatur außen", s:"Außenlufttemperatur bzw. Umgebung der Kühlzelle.", l:`
+    <p>Normklima Winter nach DIN 4108-3: −5 °C.</p>
+    <p>Bei der Kühlzelle ist „außen“ der umgebende Raum – z. B. eine Halle mit 20–30 °C oder im Sommer die Außenluft.</p>` },
+  phe: { t:"Relative Luftfeuchte außen", s:"Relative Feuchte der Außen- bzw. Umgebungsluft in %.", l:`
+    <p>Winter-Normklima: 80 %. Wird für den Glaser-Nachweis gebraucht.</p>
+    <p>Bei der Kühlzelle ist die Umgebung die warme, feuchte Seite – ihre Feuchte bestimmt den Taupunkt.</p>` },
+  taupunkt: { t:"Taupunkt θ<sub>s</sub>", s:"Temperatur, bei der die Luft der warmen Seite 100 % Feuchte erreicht.", l:`
+    <p>Warme Luft kann mehr Wasserdampf aufnehmen als kalte. Kühlt Luft ab, erreicht sie irgendwann 100 % – das ist der <b>Taupunkt</b>. Darunter fällt Wasser aus.</p>
+    <p>Beispiel: 20 °C / 50 % → θ<sub>s</sub> ≈ 9,3 °C.</p>
+    <p><b>Wo soll er liegen?</b></p>
+    <ul><li><b>Beheizt:</b> möglichst weit außen, in der Dämmung (z. B. WDVS). Innendämmung ist kritisch – dann liegt er an der kalten Altwand.</li><li><b>Kühlzelle:</b> liegt zwangsläufig in der Dämmung; eine dichte Dampfsperre außen verhindert, dass dort Tauwasser entsteht.</li></ul>
+    <p class="muted">Berechnet mit der Magnus-Formel nach DIN 4108-3. Maßgeblich ist immer die warme, feuchte Seite.</p>` },
+  tsi: { t:"Oberflächentemperatur innen θ<sub>si</sub>", s:"θsi = θi − q · Rsi. Muss über dem Taupunkt liegen (Schimmel: ≥ 12,6 °C).", l:`
+    <p>Liegt θ<sub>si</sub> unter dem Taupunkt der Raumluft, kondensiert Wasser direkt an der Wand.</p>
+    <p>Schimmel wächst schon ab ca. 80 % Oberflächenfeuchte – deshalb fordert DIN 4108-2 bei 20 °C / 50 % eine Oberflächentemperatur von mindestens <b>12,6 °C</b> (f<sub>Rsi</sub> ≥ 0,70).</p>` },
+  tse: { t:"Oberflächentemperatur außen θ<sub>se</sub>", s:"Bei Kühlzellen: muss über dem Taupunkt der Umgebung liegen, sonst ‚schwitzt‘ die Zelle.", l:`
+    <p>Bei Kühlzellen ist die Außenseite die warme Seite. Ist sie kälter als der Taupunkt der Umgebungsluft (z. B. 25 °C / 60 % → 16,7 °C), bildet sich außen Kondenswasser. Abhilfe: mehr Dämmung, Wärmebrücken vermeiden.</p>` },
+  q: { t:"Wärmestromdichte q", s:"q = U · (θi − θe) in W/m². Negativ: Wärme fließt von außen nach innen.", l:`
+    <p>So viel Wärme fließt pro m² durch das Bauteil. Mit q lassen sich auch alle Schichttemperaturen berechnen: Temperaturabfall einer Schicht Δθ = q · R.</p>` },
+  frsi: { t:"Temperaturfaktor f<sub>Rsi</sub>", s:"fRsi = (θsi − θe) / (θi − θe) ≥ 0,70 – Schimmelkriterium DIN 4108-2.", l:`
+    <p>f<sub>Rsi</sub> macht die Oberflächentemperatur unabhängig vom Klima vergleichbar. Anforderung nach DIN 4108-2: <b>f<sub>Rsi</sub> ≥ 0,70</b>.</p>
+    <p class="muted">Eigentlich ein Nachweis für Wärmebrücken (mit R<sub>si</sub> = 0,25). Ungestörte, gedämmte Bauteile erfüllen ihn fast immer.</p>` },
+  tempchart: { t:"Temperaturverlauf", s:"Rot: Temperatur durchs Bauteil. Blau gestrichelt: Taupunkt.", l:`
+    <p>In Schichten mit großem R (Dämmung) fällt die Temperatur steil ab, in Beton oder Putz kaum.</p>
+    <p>Wo die rote Linie die blau gestrichelte Taupunktlinie schneidet, liegt die <b>Taupunktebene</b>. Ob dort wirklich Wasser anfällt, zeigt erst der Glaser-Nachweis.</p>` },
+  dewplane: { t:"Taupunktebene", s:"Stelle, an der die Bauteiltemperatur unter den Taupunkt fällt.", l:`
+    <p>Die Taupunktebene sagt nur, wo es <i>kalt genug</i> für Tauwasser wäre. Ob tatsächlich Wasser anfällt, hängt davon ab, wie viel Dampf dorthin gelangt – das zeigt der Glaser-Nachweis darunter.</p>` },
+  glaser: { t:"Glaser-Verfahren", s:"Tauwassernachweis nach DIN 4108-3 – vergleicht Dampfdruck p mit Sättigungsdruck ps.", l:`
+    <p>An jeder Schichtgrenze wird der <b>Sättigungsdampfdruck p<sub>s</sub></b> (aus der Temperatur) mit dem tatsächlichen <b>Dampfteildruck p</b> verglichen – aufgetragen über der s<sub>d</sub>-Achse.</p>
+    <p>Ohne Tauwasser ist p eine Gerade vom Innen- zum Außendruck. Schneidet diese Gerade die p<sub>s</sub>-Kurve, spannt man p wie einen Faden unter der Kurve – an den Berührpunkten fällt Tauwasser aus.</p>
+    <p>Die Menge ergibt sich aus der Differenz der Dampfströme hin zur und weg von der Tauwasserebene: g = δ<sub>0</sub> · Δp / s<sub>d</sub> mit δ<sub>0</sub> = 2 · 10⁻¹⁰ kg/(m·s·Pa).</p>` },
+  days: { t:"Dauer der Tauperiode", s:"DIN 4108-3: 90 Tage Winterklima. Kühlzelle: ganzjährig (365 Tage).", l:`
+    <p>DIN 4108-3 rechnet mit 90 Tagen (2160 h) konstantem Winterklima. Bei Kühlzellen besteht das Dampfdruckgefälle ganzjährig – daher 365 Tage und keine Austrocknung.</p>` },
+  dinklima: { t:"Normklima", s:"Setzt das Standardklima für den gewählten Betriebsfall.", l:`
+    <ul><li><b>Beheizt</b> (DIN 4108-3): innen 20 °C / 50 %, außen −5 °C / 80 %, 90 Tage</li><li><b>Kühlzelle</b> (Beispiel): Zelle −20 °C / 90 %, Umgebung 25 °C / 60 %, 365 Tage</li></ul>` },
+  mt: { t:"Tauwassermenge", s:"Menge in der Tauperiode – DIN 4108-3: max. 1,0 kg/m² (0,5 an nicht saugenden Schichten).", l:`
+    <ul><li>Insgesamt höchstens <b>1,0 kg/m²</b></li><li>An Grenzflächen zu nicht saugfähigen Schichten (Folie, Beton an Dämmung): höchstens <b>0,5 kg/m²</b></li><li>Holz: max. 5 % Massezunahme, Holzwerkstoffe 3 %</li><li>Im Sommer muss alles wieder verdunsten.</li></ul>
+    <p><b>Kühlzelle:</b> Praktisch kein Tauwasser zulässig – es trocknet nie aus und vereist in der Dämmung.</p>` },
+  mv: { t:"Verdunstungsmenge", s:"Menge, die im Sommer wieder austrocknen kann (vereinfacht: 90 Tage, 12 °C, 70 %).", l:`
+    <p>Vereinfachte Verdunstungsperiode (Klima der älteren DIN 4108-3): 90 Tage, überall 12 °C, innen und außen 70 %. Das Tauwasser verdunstet zu beiden Seiten.</p>
+    <p>Nachweis erfüllt, wenn die Verdunstungsmenge größer als die Tauwassermenge ist.</p>` },
+  glaserchart: { t:"Glaser-Diagramm", s:"Rot: Sättigungsdampfdruck ps. Blau: tatsächlicher Dampfdruck p. Berühren = Tauwasser.", l:`
+    <p>x-Achse: s<sub>d</sub>-Werte der Schichten (logarithmisch gestaucht, damit Folien und Bleche nicht alles verdecken). y-Achse: Dampfdruck in Pa.</p>
+    <p>Rot ist der maximal mögliche Dampfdruck bei der jeweiligen Temperatur. Blau ist der tatsächliche Dampfdruck. Wo Blau Rot berührt (blaue Punkte), fällt Tauwasser aus. Grau gestrichelt: Verlauf, wenn es keine Kondensation gäbe.</p>` }
+};
+
+// ================= Baustandards & Förderung (mit Quellen) =================
+const SRC = {
+  iwu:  "https://www.iwu.de/publikationen/fachinformationen/gebaeudetypologie/",
+  geg1: "https://www.gesetze-im-internet.de/geg/anlage_1.html",
+  geg7: "https://www.gesetze-im-internet.de/geg/anlage_7.html",
+  beg:  "https://www.bafa.de/SharedDocs/Downloads/DE/Energie/beg_liste_technische_faq.pdf?__blob=publicationFile&v=8",
+  ph:   "https://passipedia.de/planung/sanierung_mit_passivhaus_komponenten/planungsempfehlungen_und_zertifizierung_von_innendaemmsystemen"
+};
+// Werte je Kategorie in W/(m²K); null = keine Angabe
+const STD = [
+  { id:"iwu1918", name:"Altbau vor 1918 (unsaniert)", short:"vor 1918", kind:"Bestand (typisch)", c:"#991b1b", help:"iwu",
+    v:{ wand:1.70, steil:1.11, flach:1.11, ogd:1.11, keller:1.11, boden:2.40 }, src:"IWU Gebäudetypologie, EFH", url:SRC.iwu },
+  { id:"iwu1958", name:"Baujahr 1958–1968 (unsaniert)", short:"1958–68", kind:"Bestand (typisch)", c:"#c2410c", help:"iwu",
+    v:{ wand:1.44, steil:0.92, flach:0.92, ogd:0.92, keller:0.97, boden:null }, src:"IWU Gebäudetypologie, EFH", url:SRC.iwu },
+  { id:"iwu1969", name:"Baujahr 1969–1978 (unsaniert)", short:"1969–78", kind:"Bestand (typisch)", c:"#d97706", help:"iwu",
+    v:{ wand:1.21, steil:0.63, flach:0.63, ogd:0.63, keller:0.85, boden:0.67 }, src:"IWU Gebäudetypologie, EFH", url:SRC.iwu },
+  { id:"iwu1984", name:"Baujahr 1984–1994", short:"1984–94", kind:"Bestand (typisch)", c:"#a16207", help:"iwu",
+    v:{ wand:0.68, steil:0.30, flach:0.30, ogd:0.30, keller:0.55, boden:null }, src:"IWU Gebäudetypologie, EFH", url:SRC.iwu },
+  { id:"gegneu", name:"GEG Neubau – Referenzgebäude", short:"GEG Neubau", kind:"Neubau-Referenz", c:"#0891b2", help:"gegneu",
+    v:{ wand:0.28, steil:0.20, flach:0.20, ogd:0.20, keller:0.35, boden:0.35 }, src:"GEG Anlage 1, Nr. 1.1–1.3", url:SRC.geg1 },
+  { id:"gegbest", name:"GEG Sanierung im Bestand", short:"GEG Bestand", kind:"Pflicht", c:"#2563eb", help:"gegbest",
+    v:{ wand:0.24, steil:0.24, flach:0.20, ogd:0.24, keller:0.30, boden:0.30 }, src:"GEG Anlage 7, Nr. 1a / 5a / 5c / 6a", url:SRC.geg7 },
+  { id:"beg", name:"BEG EM – Förderung (BAFA)", short:"BEG-Förderung", kind:"Förderung", c:"#16a34a", help:"beg",
+    v:{ wand:0.20, steil:0.14, flach:0.14, ogd:0.14, keller:0.25, boden:0.25 }, src:"BEG EM, Techn. Mindestanforderungen", url:SRC.beg },
+  { id:"ph", name:"Passivhaus / EnerPHit", short:"Passivhaus", kind:"Effizienzstandard", c:"#7c3aed", help:"ph",
+    v:{ wand:0.15, steil:0.15, flach:0.15, ogd:0.15, keller:0.15, boden:0.15 }, src:"Passivhaus Institut (Passipedia)", url:SRC.ph }
+];
+
+Object.assign(HELP, {
+  drawing: { t:"Bauteil-Zeichnung", s:"Klicke auf ein Bauteil im Schnitt, um es auszuwählen.", l:`
+    <p>Die Zeichnung zeigt einen vereinfachten Gebäudeschnitt (bzw. eine Kühlzelle). Ein Klick auf ein Bauteil wählt es aus und lädt den passenden Beispielaufbau.</p>
+    <p>Ist gerade ein Altbau- oder Passivhaus-Aufbau gewählt, wird – wenn vorhanden – das Bauteil aus derselben Gruppe geladen.</p>
+    <p class="muted">Blau = aktuell gewähltes Bauteil, orange = Maus darüber.</p>` },
+  std: { t:"Einordnung: Baustandards &amp; Förderung", s:"Vergleicht deinen U-Wert mit Altbau, GEG, BEG-Förderung und Passivhaus – mit Quellen.", l:`
+    <p>Die Skala (logarithmisch) zeigt, wo dein U-Wert im Vergleich zu typischen Altbauten, gesetzlichen Anforderungen, Förderbedingungen und dem Passivhaus-Standard liegt.</p>
+    <p>Für jede Anforderung, die nicht erreicht wird, zeigt die Tabelle die <b>nötige Zusatzdämmung</b>.</p>
+    <p>Jeder Wert ist mit seiner <b>Quelle</b> verlinkt. Für die Einordnung ausschlaggebend ist die Bauteilart (Wand, Dach, Kellerdecke …).</p>` },
+  dd: { t:"Nötige Zusatzdämmung", s:"Δd = (1/U_Ziel − R_T) · λ der wichtigsten Dämmschicht.", l:`
+    <p>Wie viele Zentimeter Dämmung zusätzlich nötig wären, um den Zielwert zu erreichen:</p>
+    <p><b>Δd = (1 / U<sub>Ziel</sub> − R<sub>T</sub>) · λ</b></p>
+    <p>Als λ wird die Dämmschicht mit dem größten Wärmedurchlasswiderstand genommen. Gibt es keine Dämmschicht, wird mit λ = 0,035 gerechnet. Du kannst die Dicke dann einfach in der Tabelle erhöhen.</p>` },
+  iwu: { t:"Typische Altbau-U-Werte (IWU)", s:"Typische Werte unsanierter Einfamilienhäuser nach Baujahr – Deutsche Gebäudetypologie des IWU.", l:`
+    <p>Mittlere U-Werte von Einfamilienhäusern je Baualtersklasse aus der <a href="${SRC.iwu}" target="_blank" rel="noopener">Deutschen Wohngebäudetypologie</a> des Instituts Wohnen und Umwelt (IWU, Projekt TABULA).</p>
+    <ul><li>vor 1918: Wand 1,70 · Dach 1,11 · Kellerdecke 1,11 · Bodenplatte 2,40</li><li>1958–1968: Wand 1,44 · Dach 0,92 · Kellerdecke 0,97</li><li>1969–1978: Wand 1,21 · Dach 0,63 · Kellerdecke 0,85 · Bodenplatte 0,67</li><li>1984–1994: Wand 0,68 · Dach 0,30 · Kellerdecke 0,55</li></ul>
+    <p class="muted">Durchschnittswerte – einzelne Gebäude können stark abweichen. „Dach“ steht für Dach bzw. oberste Geschossdecke.</p>` },
+  gegneu: { t:"GEG Neubau – Referenzgebäude", s:"GEG Anlage 1: U-Werte des Referenzgebäudes (Maßstab für den Neubau-Nachweis).", l:`
+    <p><a href="${SRC.geg1}" target="_blank" rel="noopener">GEG Anlage 1</a> beschreibt das Referenzgebäude für Wohngebäude:</p>
+    <ul><li>Nr. 1.1 Außenwand, Geschossdecke gegen Außenluft: 0,28</li><li>Nr. 1.2 Außenwand gegen Erdreich, Bodenplatte, Wände/Decken zu unbeheizten Räumen: 0,35</li><li>Nr. 1.3 Dach, oberste Geschossdecke: 0,20</li><li>Nr. 1.4 Fenster: U<sub>w</sub> 1,3</li></ul>
+    <p class="muted">Das ist <b>keine Einzelanforderung</b> je Bauteil: Der Neubau muss als Ganzes so gut sein wie das Referenzgebäude (bzw. besser, je nach Primärenergie-Anforderung).</p>` },
+  gegbest: { t:"GEG – Sanierung im Bestand", s:"GEG Anlage 7: Höchstwerte, wenn Bauteile im Bestand erneuert werden (Pflicht).", l:`
+    <p>Wer im Bestand ein Außenbauteil erneuert, ersetzt oder erstmals einbaut, muss die Höchstwerte nach <a href="${SRC.geg7}" target="_blank" rel="noopener">GEG Anlage 7</a> einhalten (Wohngebäude):</p>
+    <ul><li>Nr. 1a Außenwände: 0,24</li><li>Nr. 5a Dachflächen inkl. Decken gegen unbeheizte Dachräume: 0,24</li><li>Nr. 5c Dachflächen mit Abdichtung (Flachdach): 0,20</li><li>Nr. 6a/6b Wände gegen Erdreich oder unbeheizte Räume, Decken nach unten: 0,30</li><li>Nr. 6c Fußbodenaufbau von oben erneuert: 0,50</li><li>Nr. 6d Decken gegen Außenluft: 0,24</li></ul>` },
+  beg: { t:"BEG EM – Förderung (BAFA)", s:"Bundesförderung für effiziente Gebäude, Einzelmaßnahmen: strengere U-Werte als das GEG.", l:`
+    <p>Einzelmaßnahmen an der Gebäudehülle werden über die <b>BEG EM</b> beim BAFA gefördert – nur wenn die <b>Technischen Mindestanforderungen (TMA)</b> eingehalten werden:</p>
+    <ul><li>Außenwand: 0,20</li><li>Wände gegen Erdreich / unbeheizte Räume: 0,25</li><li>Innendämmung bei Sichtfachwerk: 0,65</li><li>Schrägdach, Flachdach, oberste Geschossdecke: 0,14</li><li>Kellerdecke / Decke gegen unbeheizt: 0,25</li><li>Bodenflächen gegen Erdreich: 0,25</li><li>Decke gegen Außenluft: 0,20</li><li>Fenster: U<sub>w</sub> 0,95</li></ul>
+    <p>Voraussetzung ist in der Regel die Einbindung eines <b>Energieeffizienz-Experten</b> (dena-Liste).</p>
+    <p><b>Effizienzhaus (KfW):</b> Bei einer Komplettsanierung zum Effizienzhaus wird das ganze Gebäude bewertet, nicht das einzelne Bauteil – dafür ist eine Gesamtberechnung nötig.</p>
+    <p class="muted">Quellen: <a href="${SRC.beg}" target="_blank" rel="noopener">BAFA – technische FAQ BEG EM</a>, Werteübersicht nach TMA: <a href="https://www.lampeundteam.de/foerder-uwerte.html" target="_blank" rel="noopener">lampeundteam.de</a>. Förderquoten und Bedingungen ändern sich – vor dem Antrag die aktuelle Fassung prüfen.</p>` },
+  ph: { t:"Passivhaus / EnerPHit", s:"Passivhaus Institut: opake Bauteile U ≤ 0,15 W/(m²K) (kühl-gemäßigtes Klima).", l:`
+    <p>Im Passivhaus haben die opaken Bauteile der Hülle typischerweise einen U-Wert von <b>≤ 0,15 W/(m²K)</b>, oft um 0,10.</p>
+    <p><b>EnerPHit</b> (Sanierung mit Passivhaus-Komponenten) – Bauteilverfahren im kühl-gemäßigten Klima: Außendämmung U ≤ 0,15, Innendämmung U ≤ 0,35.</p>
+    <p class="muted">Quelle: <a href="${SRC.ph}" target="_blank" rel="noopener">Passipedia (Passivhaus Institut)</a>. Bei Bauteilen gegen Erdreich/unbeheizt sind je nach Temperaturfaktor auch etwas höhere Werte möglich.</p>` },
+  einblas: { t:"Einblasdämmung", s:"Loser Dämmstoff wird maschinell in vorhandene Hohlräume geblasen – Stoff und Dicke hängen vom Einsatzort ab.", l:`
+    <p>Bei der Einblasdämmung wird loser Dämmstoff (Flocken, Granulat, Perlen) über kleine Bohrungen maschinell in <b>geschlossene Hohlräume</b> geblasen – oder offen auf die oberste Geschossdecke aufgeblasen.</p>
+    <p><b>Typische Stoffe (λ in W/(m·K), Richtwerte):</b></p>
+    <ul><li>Glaswolle-Einblas: 0,035 – Kerndämmung, Hohlräume</li><li>EPS-Dämmperlen (grau): 0,033 – Kerndämmung, auch schmale Hohlräume</li><li>Steinwolle-Granulat: ≈ 0,039 – Kerndämmung, Dachboden, Flachdach</li><li>Perlite (hydrophobiert): 0,050 – Kerndämmung</li><li>Zellulose: ≈ 0,038 – Holzbau, Dachschräge, Holzbalkendecke</li><li>Holzfaser-Einblas: ≈ 0,040 – Holzbau, Dach, Decke</li></ul>
+    <p><b>Typische Dicken – vorgegeben durch den Hohlraum:</b></p>
+    <ul><li>Kerndämmung zweischaliges Mauerwerk: Luftschicht meist 4–8 cm (üblich ab ca. 4–6 cm nutzbarer Breite)</li><li>Holzbalkendecke: Balkenhöhe, oft 16–24 cm</li><li>Dachschräge zwischen den Sparren: Sparrenhöhe, oft 12–24 cm</li><li>Holzständerwand: Ständerbreite, oft 12–24 cm</li><li>Offen auf oberste Geschossdecke: frei wählbar, oft 20–30 cm</li></ul>
+    <p><b>Wichtig:</b> In der Kerndämmung (Mauerwerk) nur <b>hydrophobe</b> Stoffe wie Mineralwolle, EPS-Perlen oder hydrophobiertes Perlite verwenden. Zellulose und Holzfaser gehören in den trockenen Holzbau bzw. ins Dach. Die Ausführung durch einen zugelassenen Fachbetrieb ist Pflicht, damit der Stoff setzungssicher mit der richtigen Rohdichte eingebracht wird.</p>
+    <p class="muted">Bei Holzbauteilen rechnet der Rechner nur das Gefach. Sparren, Balken und Ständer verschlechtern den echten U-Wert meist um 10–20 %.</p>
+    <p class="muted">Quellen: <a href="https://www.energie-fachberater.de/daemmung/einblasdaemmung-welche-daemmstoffe-eignen-sich.php" target="_blank" rel="noopener">energie-fachberater.de</a> (λ-Werte, Einsatz), <a href="https://www.appiarius-daemmtechnik.de/daemmatlas/verfahren/kerndaemmung-zweischaliges-mauerwerk" target="_blank" rel="noopener">Appiarius Dämmatlas</a> (Hohlraumbreite, Stoffe).</p>` },
+  kern: { t:"Sonderregeln Kerndämmung / Hohlraum", s:"Bei begrenzter Dicke gilt: Hohlraum vollständig füllen. GEG: λ ≤ 0,045 für Einblasdämmung. BEG: λ ≤ 0,035.", l:`
+    <p>Bei zweischaligem Mauerwerk ist die Dämmdicke durch die Luftschicht begrenzt. Den U-Wert von 0,24 bzw. 0,20 erreicht man damit meist nicht. Deshalb gibt es Sonderregeln:</p>
+    <p><b>GEG Anlage 7, Fußnote 1:</b> Ist die Dämmschichtdicke aus technischen Gründen begrenzt, gilt die Anforderung als erfüllt, wenn die höchstmögliche Dämmschichtdicke eingebaut wird – mit λ ≤ 0,035 W/(m·K). <b>Werden Dämmstoffe in Hohlräume eingeblasen</b> oder nachwachsende Rohstoffe verwendet, reicht λ ≤ 0,045 W/(m·K).</p>
+    <p><b>BEG EM (Förderung):</b> Für die Kerndämmung von bestehendem zweischaligem Mauerwerk gilt statt U ≤ 0,20 eine eigene Anforderung an den Dämmstoff: λ ≤ 0,035 W/(m·K), Hohlraum vollständig verfüllt.</p>
+    <p class="muted">Quellen: <a href="${SRC.geg7}" target="_blank" rel="noopener">GEG Anlage 7, Fußnote 1</a> (Wortlaut geprüft). BEG-Regel laut Zusammenfassungen der TMA, z. B. <a href="https://www.energie-experten.org/bauen-und-sanieren/daemmung/einblasdaemmung/zweischaliges-mauerwerk" target="_blank" rel="noopener">energie-experten.org</a> – die Original-TMA vor einem Antrag prüfen.</p>` },
+  R: { t:"Wärmedurchlasswiderstand R", s:"R = d / λ in m²K/W – je größer, desto besser dämmt die Schicht. Luftschichten: Tabellenwert.", l:`
+    <p>R = d / λ (d in Metern!). Die R-Werte aller Schichten werden addiert. Beispiel: 16 cm Mineralwolle WLS 035 → R = 0,16 / 0,035 = 4,57 m²K/W.</p>
+    <p><b>Luftschichten</b> haben kein festes λ. Ihr R hängt von Dicke und Wärmestromrichtung ab und wird aus der Tabelle der DIN EN ISO 6946 genommen:</p>
+    <ul><li>ruhend, Wärmestrom horizontal (Wand): 1 cm 0,15 · ab 2,5 cm 0,18</li><li>aufwärts (Dach): ab 1,5 cm 0,16</li><li>abwärts (Boden): 2,5 cm 0,19 · 5 cm 0,21 · 10 cm 0,22 · 30 cm 0,23</li><li>schwach belüftet: halber Wert der ruhenden Luftschicht</li><li>stark belüftet (Hinterlüftung): Luftschicht und alles außen davon <b>nicht</b> eintragen, stattdessen R<sub>se</sub> = R<sub>si</sub></li></ul>
+    <p class="muted">Eine 6-cm-Luftschicht bringt also nur R ≈ 0,18 – gleich viel wie ca. 0,6 cm Dämmstoff mit λ 0,035. Deshalb lohnt die Kerndämmung so sehr.</p>` },
+  kuehlklassen: { t:"Kühlraum-Richtwerte", s:"Faustwert Wärmestrom q ≤ 8 W/m² → U_max = 8 / (θ_Umgebung − θ_Zelle).", l:`
+    <p>Im Kühlraumbau wird die Dämmdicke oft über den zulässigen Wärmestrom festgelegt. Ein gängiger Praxiswert ist <b>q ≤ 8 W/m²</b>:</p>
+    <p>U<sub>max</sub> = 8 W/m² / (θ<sub>Umgebung</sub> − θ<sub>Zelle</sub>)</p>
+    <p class="muted">Praxis-/Faustwert aus der Kühlraumplanung, keine Norm. Maßgeblich sind die Vorgaben des Kühlanlagenplaners.</p>` }
+});
+
+// ================= Hilfsfunktionen =================
+const $ = id => document.getElementById(id);
+const num = id => parseFloat($(id).value);
+const layers = $("layers");
+let mode = "haus";
+let dragRow = null;
+const BT = () => MODES[mode].bt;
+function fmt(x, n = 3) { return Number.isFinite(x) ? x.toLocaleString("de-DE", { minimumFractionDigits:n, maximumFractionDigits:n }) : "–"; }
+function fmtSd(x) { return fmt(x, x < 10 ? 2 : x < 1000 ? 1 : 0); }
+const info = k => `<i class="info" data-help="${k}">i</i>`;
+// Sättigungsdampfdruck [Pa] und Taupunkt nach DIN 4108-3 (Magnus)
+function ps(T) { return T >= 0 ? 610.5 * Math.exp(17.269 * T / (237.3 + T)) : 610.5 * Math.exp(21.875 * T / (265.5 + T)); }
+function dewFromP(p) { const a = Math.log(p / 610.5); return p >= 610.5 ? 237.3 * a / (17.269 - a) : 265.5 * a / (21.875 - a); }
+const DELTA0 = 2.0e-10; // Dampfleitkoeffizient Luft [kg/(m·s·Pa)]
+
+document.addEventListener("mouseup", () => { if (!dragRow) [...layers.rows].forEach(r => r.draggable = false); });
+
+// ================= Baustoff-Auswahl mit Suche =================
+const picker = $("picker"), pSearch = $("psearch"), pList = $("plist"), pChips = $("pchips");
+let pickRow = null, pickCat = null;
+const norm = s => s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+
+pChips.innerHTML = `<button class="chip on" data-cat="">Alle</button>` +
+  MATS.map(([g, gc]) => `<button class="chip" data-cat="${g}" style="--c:${gc}">${g}</button>`).join("");
+pChips.addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  pickCat = b.dataset.cat || null;
+  pChips.querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === b));
+  renderPick(); pSearch.focus();
+});
+
+function renderPick() {
+  const terms = norm(pSearch.value).split(/\s+/).filter(Boolean);
+  let html = "";
+  MATS.forEach(([g, gc, list]) => {
+    if (pickCat && pickCat !== g) return;
+    const hits = list.filter(([n]) => terms.every(t => norm(n + " " + g).includes(t)));
+    if (!hits.length) return;
+    html += `<div class="pg" style="--c:${gc}">${g}</div>` + hits.map(([n, l, mu, c]) =>
+      `<div class="pi${pickRow && n === pickRow.dataset.mat ? " cur" : ""}" data-n="${n}">
+         <span class="sw" style="background:${c}"></span><span>${n}</span>
+         <span class="pl">${MAT[n].air ? (MAT[n].air < 1 ? "R = ½ × ruhende Luftschicht" : "R nach DIN EN ISO 6946 (dickenabhängig)") : l === null ? "frei eingeben" : "λ = " + fmt(l, 3) + " W/mK · μ = " + mu.toLocaleString("de-DE")}</span></div>`).join("");
+  });
+  pList.innerHTML = html || `<div class="pe">Kein Baustoff gefunden</div>`;
+  const f = pList.querySelector(".pi"); if (f) f.classList.add("hl");
+}
+function openPicker(tr, btn) {
+  if (!picker.hidden && pickRow === tr) return closePicker();
+  pickRow = tr;
+  const r = btn.getBoundingClientRect();
+  picker.style.left = Math.max(8, Math.min(r.left, innerWidth - 448)) + scrollX + "px";
+  picker.style.top = r.bottom + scrollY + 4 + "px";
+  picker.hidden = false;
+  pSearch.value = "";
+  renderPick(); pSearch.focus();
+}
+function closePicker() { picker.hidden = true; pickRow = null; }
+function choose(n) { if (pickRow) setMat(pickRow, n); closePicker(); calc(); }
+pSearch.addEventListener("input", renderPick);
+pSearch.addEventListener("keydown", e => {
+  const items = [...pList.querySelectorAll(".pi")];
+  let i = items.findIndex(x => x.classList.contains("hl"));
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault(); if (!items.length) return;
+    if (i >= 0) items[i].classList.remove("hl");
+    i = (i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+    items[i].classList.add("hl"); items[i].scrollIntoView({ block:"nearest" });
+  } else if (e.key === "Enter") { e.preventDefault(); if (items[i]) choose(items[i].dataset.n); }
+  else if (e.key === "Escape") closePicker();
+});
+pList.addEventListener("click", e => { const it = e.target.closest(".pi"); if (it) choose(it.dataset.n); });
+document.addEventListener("mousedown", e => {
+  if (!picker.hidden && !picker.contains(e.target) && !e.target.closest(".matbtn")) closePicker();
+});
+
+function setMat(tr, name) {
+  const m = MAT[name];
+  tr.dataset.mat = name;
+  const btn = tr.querySelector(".matbtn");
+  btn.innerHTML = `<span class="sw" style="background:${m.c}"></span><span class="mn">${name}</span><span class="car">▾</span>`;
+  btn.style.borderLeft = `5px solid ${m.gc}`;
+  const lam = tr.querySelector(".lam"), mu = tr.querySelector(".mu");
+  // Luftschichten: R aus Tabelle (DIN EN ISO 6946) statt über λ
+  lam.disabled = !!m.air;
+  lam.placeholder = m.air ? "Tabelle" : "";
+  lam.value = m.air ? "" : m.l !== null ? m.l : (lam.value || 0.04);
+  mu.value = m.mu !== null ? m.mu : (mu.value || 1);
+}
+
+// ================= Schichten =================
+function addLayer(name = "Mineralwolle WLS 035", d = 10) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td style="white-space:nowrap"><span class="grip" title="Ziehen zum Verschieben">⠿</span><span class="idx"></span></td>
+    <td><button type="button" class="matbtn" data-help="schichten"></button></td>
+    <td class="num"><input class="small lam" type="number" step="any" min="0.001" data-help="lambda"></td>
+    <td class="num"><input class="small mu" type="number" step="any" min="0" data-help="mu"></td>
+    <td class="num"><input class="small d" type="number" step="any" min="0" value="${d}" data-help="d"></td>
+    <td class="num r">–</td>
+    <td class="num sd">–</td>
+    <td class="acts"><button class="mv up" title="Nach innen verschieben">▲</button> <button class="mv down" title="Nach außen verschieben">▼</button> <button class="x" title="Entfernen">✕</button></td>`;
+  tr.querySelector(".up").addEventListener("click", () => {
+    if (tr.previousElementSibling) layers.insertBefore(tr, tr.previousElementSibling); calc();
+  });
+  tr.querySelector(".down").addEventListener("click", () => {
+    if (tr.nextElementSibling) layers.insertBefore(tr.nextElementSibling, tr); calc();
+  });
+  tr.querySelector(".grip").addEventListener("mousedown", () => tr.draggable = true);
+  tr.addEventListener("dragstart", e => {
+    dragRow = tr; tr.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", "");
+  });
+  tr.addEventListener("dragend", () => { tr.draggable = false; tr.classList.remove("dragging"); dragRow = null; calc(); });
+  tr.addEventListener("dragover", e => {
+    if (!dragRow || dragRow === tr) return;
+    e.preventDefault();
+    const r = tr.getBoundingClientRect();
+    layers.insertBefore(dragRow, e.clientY > r.top + r.height / 2 ? tr.nextSibling : tr);
+  });
+  const btn = tr.querySelector(".matbtn");
+  btn.addEventListener("click", () => openPicker(tr, btn));
+  tr.querySelectorAll("input").forEach(i => i.addEventListener("input", calc));
+  tr.querySelector(".x").addEventListener("click", () => { tr.remove(); calc(); });
+  layers.appendChild(tr);
+  setMat(tr, name);
+}
+
+function readLayers() {
+  return [...layers.rows].map(tr => {
+    const name = tr.dataset.mat;
+    const l = parseFloat(tr.querySelector(".lam").value);
+    const mu = Math.max(0, parseFloat(tr.querySelector(".mu").value) || 0);
+    const d = Math.max(0, parseFloat(tr.querySelector(".d").value) || 0);
+    const air = MAT[name].air;
+    return { tr, name, c: MAT[name].c, l, mu, d, R: air ? air * airR(d) : l > 0 ? d / 100 / l : 0, sd: mu * d / 100 };
+  });
+}
+
+function loadPreset() {
+  layers.innerHTML = "";
+  BT()[$("bauteil").value].preset.forEach(([n, d]) => addLayer(n, d));
+  calc();
+}
+function setBauteil() {
+  const b = BT()[$("bauteil").value];
+  $("rsi").value = b.rsi; $("rse").value = b.rse;
+  calc();
+}
+function setClimate() {
+  const M = MODES[mode];
+  $("ti").value = M.ti; $("phi").value = M.phi; $("te").value = M.te; $("phe").value = M.phe; $("days").value = M.days;
+}
+function setMode(m) {
+  mode = m;
+  const M = MODES[m];
+  $("mode").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
+  const groups = {};
+  Object.entries(M.bt).forEach(([k, v]) => (groups[v.grp || (m === "kuehl" ? "Kühlzellen" : "Standard")] ||= []).push(k));
+  $("bauteil").innerHTML = Object.entries(groups).map(([g, ks]) =>
+    `<optgroup label="${g}">${ks.map(k => `<option>${k}</option>`).join("")}</optgroup>`).join("");
+  $("drawing").innerHTML = m === "kuehl" ? COLD_SVG : HOUSE_SVG;
+  $("lblTi").innerHTML = M.lbl.ti; $("lblPhi").innerHTML = M.lbl.phi;
+  $("lblTe").innerHTML = M.lbl.te; $("lblPhe").innerHTML = M.lbl.phe;
+  $("dirLabel").textContent = m === "haus" ? "innen → außen" : "Zelle (innen) → Umgebung (außen)";
+  setClimate();
+  const b = BT()[$("bauteil").value];
+  $("rsi").value = b.rsi; $("rse").value = b.rse;
+  loadPreset();
+}
+
+// ================= Berechnung =================
+function calc() {
+  const rsi = parseFloat($("rsi").value) || 0, rse = parseFloat($("rse").value) || 0;
+  const L = readLayers();
+  L.forEach((x, i) => {
+    x.tr.querySelector(".idx").textContent = i + 1;
+    x.tr.querySelector(".up").disabled = i === 0;
+    x.tr.querySelector(".down").disabled = i === L.length - 1;
+    x.tr.querySelector(".r").textContent = fmt(x.R);
+    x.tr.querySelector(".sd").textContent = fmtSd(x.sd);
+  });
+  const sumR = L.reduce((a, x) => a + x.R, 0), sumD = L.reduce((a, x) => a + x.d, 0), sumSd = L.reduce((a, x) => a + x.sd, 0);
+  const rt = rsi + sumR + rse;
+  const u = rt > 0 ? 1 / rt : 0;
+  $("u").innerHTML = rt > 0 ? `${fmt(u)} <small>W/(m²K)</small>` : "–";
+  $("rt").textContent = fmt(rt);
+  $("dt").textContent = fmt(sumD, 1);
+  $("sdt").textContent = fmtSd(sumSd);
+
+  const M = MODES[mode];
+  if (mode === "haus") {
+    const g = STD.find(s => s.id === "gegbest").v[BT()[$("bauteil").value].cat] ?? null;
+    const kern = BT()[$("bauteil").value].kern && kernLambda(L) <= 0.045;
+    $("geg").innerHTML = g == null
+      ? `<span class="badge na">kein GEG-Grenzwert</span>`
+      : u <= g ? `<span class="badge ok">✓ erfüllt GEG Anl. 7 (U ≤ ${fmt(g,2)})</span>`
+      : kern   ? `<span class="badge ok">✓ GEG über Sonderregel Hohlraumdämmung (Anl. 7, Fn. 1)</span>${info("kern")}`
+               : `<span class="badge bad">✗ über GEG Anl. 7 (U ≤ ${fmt(g,2)})</span>`;
+  } else {
+    const q = Math.abs(u * (num("ti") - num("te")));
+    $("geg").innerHTML = q <= 8
+      ? `<span class="badge ok">✓ q = ${fmt(q,1)} W/m² ≤ 8 W/m² (Richtwert Kühlraum)</span>`
+      : `<span class="badge bad">✗ q = ${fmt(q,1)} W/m² > 8 W/m² – mehr Dämmung (Richtwert Kühlraum)</span>`;
+  }
+
+  $("stack").innerHTML = `<div class="side">${M.inn}</div>` +
+    L.filter(p => p.d > 0).map(p =>
+      `<div style="flex:${Math.max(p.d, 0.8)} 1 0;background:${p.c}" title="${p.name}, ${fmt(p.d,2)} cm">${p.d >= 4 ? p.name : ""}</div>`
+    ).join("") + `<div class="side">${M.aus}</div>`;
+
+  renderStandards(u, rt, L);
+  markDrawing();
+  climate(L, rsi, rse, rt, u);
+}
+
+function climate(L, rsi, rse, rt, u) {
+  const M = MODES[mode];
+  const ti = num("ti"), te = num("te");
+  const phi = Math.min(100, Math.max(1, num("phi") || 50)), phe = Math.min(100, Math.max(1, num("phe") || 80));
+  if (isNaN(ti) || isNaN(te) || rt <= 0 || !L.length) { $("chart").innerHTML = ""; $("gchart").innerHTML = ""; $("glres").innerHTML = ""; $("dewmsg").innerHTML = ""; return; }
+
+  const q = u * (ti - te);
+  // Temperatur, Lage (cm) und kumuliertes sd an allen Schichtgrenzen
+  const pts = [{ x:0, t:ti - q * rsi, sd:0 }];
+  let x = 0, t = pts[0].t, sd = 0;
+  L.forEach(l => { x += l.d; t -= q * l.R; sd += l.sd; pts.push({ x, t, sd }); });
+  const tsi = pts[0].t, tse = pts[pts.length - 1].t;
+
+  const pi = phi / 100 * ps(ti), pe = phe / 100 * ps(te);
+  const warmIn = ti >= te;
+  const td = dewFromP(warmIn ? pi : pe);
+  const warmName = warmIn ? M.inn : M.aus;
+
+  $("tdSide").textContent = warmName;
+  $("td").textContent = fmt(td, 1);
+  $("tsi").textContent = fmt(tsi, 1);
+  $("tse").textContent = fmt(tse, 1);
+  $("q").textContent = fmt(q, 1);
+
+  // Taupunktebene: erste Unterschreitung von der warmen Seite aus
+  let plane = null;
+  const idx = [...Array(pts.length - 1).keys()].map(i => i + 1);
+  if (!warmIn) idx.reverse();
+  for (const i of idx) {
+    const a = pts[i - 1], b = pts[i];
+    if ((a.t - td) * (b.t - td) < 0) { plane = { x: a.x + (b.x - a.x) * (a.t - td) / (a.t - b.t), layer: L[i - 1].name }; break; }
+  }
+  const tWarmSurf = warmIn ? tsi : tse;
+  let msg = "";
+  if (tWarmSurf < td) msg += `<span class="badge bad">✗ Tauwasser an der Oberfläche (${warmName}): ${fmt(tWarmSurf,1)} °C < θs ${fmt(td,1)} °C</span>${info(warmIn ? "tsi" : "tse")} `;
+  else if (plane) msg += `<span class="badge na">Taupunktebene bei ca. ${fmt(plane.x,1)} cm von innen – in „${plane.layer}“</span>${info("dewplane")} `;
+  else msg += `<span class="badge ok">✓ Temperatur bleibt im gesamten Bauteil über dem Taupunkt</span> `;
+  if (mode === "haus" && ti > te) {
+    const frsi = (tsi - te) / (ti - te);
+    msg += frsi >= 0.7
+      ? `<span class="badge ok">✓ Schimmelkriterium f<sub>Rsi</sub> = ${fmt(frsi,2)} ≥ 0,70</span>`
+      : `<span class="badge bad">✗ Schimmelgefahr: f<sub>Rsi</sub> = ${fmt(frsi,2)} < 0,70</span>`;
+    msg += info("frsi");
+  }
+  if (!warmIn) msg += `<br><span class="badge warn">Warme Seite ist ${mode === "kuehl" ? "die Umgebung (außen)" : "außen"} → Dampfsperre gehört auf die warme Außenseite</span>${info("mode")}`;
+  $("dewmsg").innerHTML = msg;
+
+  drawChart(pts, L, ti, te, td, plane);
+  glaser(pts, L, pi, pe);
+}
+
+// ================= Glaser =================
+function glaser(pts, L, pi, pe) {
+  const S = pts[pts.length - 1].sd;
+  const hours = Math.max(0, num("days") || 0) * 24;
+  if (S <= 0) { $("glres").innerHTML = `<span class="badge na">s<sub>d</sub> gesamt = 0 – kein Glaser-Nachweis möglich (μ-Werte fehlen)</span>`; $("gchart").innerHTML = ""; return; }
+
+  const P = pts.map((p, k) => ({ x:p.sd, y:ps(p.t), k }));
+  const A = { x:0, y:Math.min(pi, P[0].y) }, B = { x:S, y:Math.min(pe, P[P.length - 1].y) };
+  // Kandidaten: Anfang, innere Schichtgrenzen, Ende – gleiche sd zusammenfassen (kleinster Druck zählt)
+  const cand = [];
+  [A, ...P.slice(1, -1), B].forEach(p => {
+    const last = cand[cand.length - 1];
+    if (last && Math.abs(last.x - p.x) < 1e-9) { if (p.y < last.y) cand[cand.length - 1] = { ...p, end: last.end || p === B }; if (p === B) cand[cand.length - 1].end = true; }
+    else cand.push(p === B ? { ...p, end:true } : p);
+  });
+  // Dampfdruckverlauf = untere konvexe Hülle ("gespannter Faden" unter ps)
+  const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const hull = [];
+  for (const p of cand) {
+    while (hull.length >= 2 && cross(hull[hull.length - 2], hull[hull.length - 1], p) <= 1e-9) hull.pop();
+    hull.push(p);
+  }
+  const slope = (a, b) => (b.y - a.y) / Math.max(b.x - a.x, 1e-9);
+  const planes = [];
+  for (let j = 1; j < hull.length - 1; j++) {
+    const h = hull[j];
+    if (h.k === undefined || h.end) continue;
+    const rate = DELTA0 * (slope(h, hull[j + 1]) - slope(hull[j - 1], h)); // kg/(m²·s)
+    const mass = rate * hours * 3600;
+    if (mass > 1e-6) planes.push({ k:h.k, sd:h.x, mass, x:pts[h.k].x, a:L[h.k - 1].name, b:L[h.k].name });
+  }
+  const MT = planes.reduce((a, p) => a + p.mass, 0);
+
+  let h = "";
+  if (!planes.length) {
+    h += `<span class="badge ok">✓ Kein Tauwasser im Bauteil – der Dampfdruck bleibt überall unter dem Sättigungsdruck</span>${info("glaser")}`;
+  } else {
+    h += `<table class="mini"><tr><th>Tauwasserebene</th><th>Lage</th><th class="num">Menge</th></tr>` +
+      planes.map(p => `<tr><td>zwischen „${p.a}“ und „${p.b}“</td><td>${fmt(p.x,1)} cm von innen</td><td class="num"><b>${fmt(p.mass*1000, p.mass < 0.01 ? 1 : 0)} g/m²</b></td></tr>`).join("") +
+      `</table>`;
+    h += `<div class="kv">Tauwassermenge M<sub>T</sub> = <b>${fmt(MT,3)} kg/m²</b> in ${fmt(hours/24,0)} Tagen ${info("mt")}</div>`;
+    if (mode === "haus") {
+      const psV = ps(12), pV = 0.7 * psV;
+      const sa = planes[0].sd, sb = planes[planes.length - 1].sd;
+      const MV = DELTA0 * ((psV - pV) / Math.max(sa, 1e-3) + (psV - pV) / Math.max(S - sb, 1e-3)) * 90 * 24 * 3600;
+      h += `<div class="kv">Verdunstungsmenge M<sub>V</sub> ≈ <b>${fmt(MV,3)} kg/m²</b> (vereinfacht) ${info("mv")}</div><div style="margin-top:6px">`;
+      h += MT <= 1.0 ? `<span class="badge ok">✓ M<sub>T</sub> ≤ 1,0 kg/m²</span>` : `<span class="badge bad">✗ M<sub>T</sub> > 1,0 kg/m²</span>`;
+      h += MT <= 0.5 ? "" : `<span class="badge warn">an nicht saugenden Schichten max. 0,5 kg/m²</span>`;
+      h += MV >= MT ? `<span class="badge ok">✓ trocknet im Sommer aus (M<sub>V</sub> ≥ M<sub>T</sub>)</span>` : `<span class="badge bad">✗ trocknet nicht aus (M<sub>V</sub> < M<sub>T</sub>)</span>`;
+      h += `</div>`;
+    } else {
+      h += `<div style="margin-top:6px">` + (MT <= 0.01
+        ? `<span class="badge ok">✓ vernachlässigbar (< 10 g/m² pro Jahr)</span>`
+        : `<span class="badge bad">✗ Tauwasser/Eis sammelt sich an – keine Austrocknung möglich. Dampfsperre auf die warme Außenseite!</span>`) + `</div>`;
+    }
+  }
+  $("glres").innerHTML = h;
+  drawGlaser(pts, L, hull, A, B, planes);
+}
+
+// ================= Diagramme =================
+function drawChart(pts, L, ti, te, td, plane) {
+  const M = MODES[mode];
+  const W = 700, H = 260, Lm = 60, Rm = 60, T = 16, B = 34, air = 40;
+  const total = pts[pts.length - 1].x || 1;
+  const x0 = Lm + air, x1 = W - Rm - air;
+  const X = x => x0 + (x / total) * (x1 - x0);
+  const all = [ti, te, td, ...pts.map(p => p.t)];
+  const tMin = Math.min(...all), tMax = Math.max(...all);
+  const pad = (tMax - tMin) * 0.08 || 1;
+  const Y = t => T + (1 - (t - (tMin - pad)) / (tMax - tMin + 2 * pad)) * (H - T - B);
+  let s = "", cx = 0;
+  L.forEach(p => {
+    if (p.d > 0) s += `<rect x="${X(cx)}" y="${T}" width="${Math.max(X(cx + p.d) - X(cx), 0.8)}" height="${H - T - B}" fill="${p.c}" opacity=".55" stroke="#0002"><title>${p.name}</title></rect>`;
+    cx += p.d;
+  });
+  s += `<text x="${Lm + air/2}" y="${H - 12}" font-size="11" fill="#6b7280" text-anchor="middle">${M.inn}</text>`;
+  s += `<text x="${W - Rm - air/2}" y="${H - 12}" font-size="11" fill="#6b7280" text-anchor="middle">${M.aus}</text>`;
+  s += `<text x="${(x0 + x1)/2}" y="${H - 12}" font-size="11" fill="#6b7280" text-anchor="middle">${fmt(total,1)} cm</text>`;
+  [tMin, 0, tMax].filter((v, i, a) => v >= tMin - pad && v <= tMax + pad && a.indexOf(v) === i).forEach(v => {
+    s += `<line x1="${Lm}" x2="${W - Rm}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e3e6eb"/>`;
+    s += `<text x="${Lm - 6}" y="${Y(v) + 4}" font-size="11" fill="#6b7280" text-anchor="end">${fmt(v,1)} °C</text>`;
+  });
+  s += `<line x1="${Lm}" x2="${W - Rm}" y1="${Y(td)}" y2="${Y(td)}" stroke="#2563eb" stroke-dasharray="6 4" stroke-width="1.5"/>`;
+  s += `<text x="${W - Rm + 4}" y="${Y(td) + 4}" font-size="11" fill="#2563eb">θs ${fmt(td,1)}</text>`;
+  const line = [[Lm, Y(ti)], ...pts.map(p => [X(p.x), Y(p.t)]), [W - Rm, Y(te)]];
+  s += `<polyline points="${line.map(p => p.join(",")).join(" ")}" fill="none" stroke="#b91c1c" stroke-width="2.5"/>`;
+  pts.forEach(p => s += `<circle cx="${X(p.x)}" cy="${Y(p.t)}" r="3" fill="#b91c1c"/>`);
+  s += `<text x="${Lm}" y="${Y(ti) - 6}" font-size="11" fill="#b91c1c">${fmt(ti,1)}</text>`;
+  s += `<text x="${W - Rm}" y="${Y(te) - 6}" font-size="11" fill="#b91c1c" text-anchor="end">${fmt(te,1)}</text>`;
+  if (plane) {
+    s += `<line x1="${X(plane.x)}" x2="${X(plane.x)}" y1="${T}" y2="${H - B}" stroke="#2563eb" stroke-width="2"/>`;
+    s += `<circle cx="${X(plane.x)}" cy="${Y(td)}" r="5" fill="#2563eb"/>`;
+  }
+  $("chart").innerHTML = s;
+}
+
+function drawGlaser(pts, L, hull, A, B, planes) {
+  const M = MODES[mode];
+  const W = 700, H = 270, Lm = 64, Rm = 64, T = 16, Bm = 40;
+  const S = pts[pts.length - 1].sd;
+  // Schichtbreite logarithmisch nach sd, damit Folien/Bleche nicht alles verdecken
+  const wts = L.map(l => Math.log10(1 + 20 * l.sd) + 0.15);
+  const wsum = wts.reduce((a, b) => a + b, 0);
+  const bx = [Lm]; wts.forEach(w => bx.push(bx[bx.length - 1] + w / wsum * (W - Lm - Rm)));
+  const top = Math.max(A.y, B.y, ...pts.map(p => ps(p.t)), 1);
+  const step = top > 3000 ? 1000 : top > 1200 ? 500 : top > 500 ? 200 : 100;
+  const ymax = Math.ceil(top * 1.05 / step) * step;
+  const Y = p => T + (1 - p / ymax) * (H - T - Bm);
+  let s = "";
+  L.forEach((l, k) => {
+    s += `<rect x="${bx[k]}" y="${T}" width="${Math.max(bx[k + 1] - bx[k], 0)}" height="${H - T - Bm}" fill="${l.c}" opacity=".5" stroke="#0002"><title>${l.name}: sd = ${fmtSd(l.sd)} m</title></rect>`;
+  });
+  for (let v = 0; v <= ymax + 1e-9; v += step) {
+    s += `<line x1="${Lm}" x2="${W - Rm}" y1="${Y(v)}" y2="${Y(v)}" stroke="#0001"/>`;
+    s += `<text x="${Lm - 6}" y="${Y(v) + 4}" font-size="11" fill="#6b7280" text-anchor="end">${v.toLocaleString("de-DE")} Pa</text>`;
+  }
+  const psPts = [];
+  L.forEach((l, k) => { for (let j = 0; j <= 12; j++) { const f = j / 12; psPts.push([bx[k] + f * (bx[k + 1] - bx[k]), Y(ps(pts[k].t + (pts[k + 1].t - pts[k].t) * f))]); } });
+  s += `<polyline points="${psPts.map(p => p.join(",")).join(" ")}" fill="none" stroke="#b91c1c" stroke-width="2.5"/>`;
+  if (planes.length) {
+    const lin = pts.map((p, i) => [bx[i], Y(A.y + (B.y - A.y) * p.sd / S)]);
+    s += `<polyline points="${lin.map(p => p.join(",")).join(" ")}" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  }
+  const pAt = sd => {
+    for (let j = 0; j < hull.length - 1; j++) {
+      const a = hull[j], b = hull[j + 1];
+      if (sd <= b.x + 1e-9) { const dx = b.x - a.x; return dx > 1e-9 ? a.y + (b.y - a.y) * (sd - a.x) / dx : Math.min(a.y, b.y); }
+    }
+    return hull[hull.length - 1].y;
+  };
+  const pl = pts.map((p, i) => [bx[i], Y(pAt(p.sd))]);
+  s += `<polyline points="${pl.map(p => p.join(",")).join(" ")}" fill="none" stroke="#2563eb" stroke-width="2.5"/>`;
+  planes.forEach(p => s += `<circle cx="${bx[p.k]}" cy="${Y(ps(pts[p.k].t))}" r="6" fill="#2563eb" stroke="#fff" stroke-width="2"><title>Tauwasser: ${fmt(p.mass*1000,0)} g/m²</title></circle>`);
+  s += `<text x="${Lm + 4}" y="${Y(A.y) - 6}" font-size="11" fill="#2563eb">p = ${fmt(A.y,0)} Pa</text>`;
+  s += `<text x="${W - Rm - 4}" y="${Y(B.y) - 6}" font-size="11" fill="#2563eb" text-anchor="end">p = ${fmt(B.y,0)} Pa</text>`;
+  s += `<text x="${Lm}" y="${H - 14}" font-size="11" fill="#6b7280">${M.inn}</text>`;
+  s += `<text x="${W - Rm}" y="${H - 14}" font-size="11" fill="#6b7280" text-anchor="end">${M.aus}</text>`;
+  s += `<text x="${W / 2}" y="${H - 14}" font-size="11" fill="#6b7280" text-anchor="middle">s<tspan font-size="8" dy="2">d</tspan><tspan dy="-2">-Achse (log. gestaucht) · Σ s</tspan><tspan font-size="8" dy="2">d</tspan><tspan dy="-2"> = ${fmtSd(S)} m</tspan></text>`;
+  $("gchart").innerHTML = s;
+}
+
+// ================= Einordnung: Standards & Förderung =================
+function renderStandards(u, rt, L) {
+  const box = $("stdBody");
+  const b = BT()[$("bauteil").value];
+  let rows;
+  if (mode === "kuehl") {
+    const te = num("te");
+    rows = [["Normalkühlraum +2 °C", "+2 °C", 2, "#0891b2"], ["Tiefkühlraum −20 °C", "−20 °C", -20, "#2563eb"], ["Schockfroster −35 °C", "−35 °C", -35, "#7c3aed"]]
+      .filter(r => te > r[2])
+      .map(([name, short, T, c]) => ({ name, short, c, kind:"Faustwert", help:"kuehlklassen", lim: 8 / (te - T),
+                                       src:`q ≤ 8 W/m² bei θe = ${fmt(te, 0)} °C (Praxiswert)` }));
+  } else {
+    rows = STD.filter(s => s.v[b.cat] != null).map(s => ({ ...s, lim: s.v[b.cat] }));
+  }
+  if (!rows.length) {
+    box.innerHTML = `<p class="muted">Für Innenwände zwischen beheizten Räumen gibt es keine U-Wert-Anforderungen – es fließt praktisch keine Wärme nach außen.</p>`;
+    return;
+  }
+  rows.sort((a, b) => b.lim - a.lim);
+  const ins = L.filter(l => l.l > 0 && l.l < 0.1).sort((a, b) => b.R - a.R)[0];
+  const lamIns = ins ? ins.l : 0.035, insName = ins ? ins.name : "Dämmung (λ = 0,035)";
+  const LO = 0.08, HI = 2.5;
+  const pos = v => Math.min(100, Math.max(0, (Math.log(v) - Math.log(LO)) / (Math.log(HI) - Math.log(LO)) * 100));
+  // Sonderregeln für Kerndämmung (Hohlraum vollständig gefüllt, Dicke technisch begrenzt)
+  const kl = kernLambda(L);
+  rows.forEach(r => {
+    r.ok = u <= r.lim + 1e-9; r.special = "";
+    if (b.kern && !r.ok && r.id === "gegbest" && kl <= 0.045) { r.ok = true; r.special = "Sonderregel Hohlraumdämmung"; }
+    if (b.kern && !r.ok && r.id === "beg" && kl <= 0.035) { r.ok = true; r.special = "Sonderregel Kerndämmung"; }
+  });
+  const met = rows.filter(r => r.ok);
+  const best = met[met.length - 1];
+  let h = b.grp === "Einblasdämmung"
+    ? `<div class="kv" style="margin-bottom:6px">💨 Einblasdämmung – geeignete Stoffe, Dicken &amp; Sonderregeln ${info("einblas")}</div>` : "";
+  h += `<div class="kv">Niveau deines Bauteils: ` + (best
+    ? `<span class="badge ok">${best.name}</span>`
+    : `<span class="badge bad">schlechter als alle Vergleichswerte</span>`) + `</div>`;
+  h += `<div class="scale"><div class="sbar"></div>`;
+  [0.1, 0.2, 0.5, 1, 2].forEach(v => h += `<div class="ax" style="left:${pos(v)}%">${fmt(v, v < 1 ? 1 : 0)}</div>`);
+  // Beschriftungen am Rand nach innen ausrichten, damit nichts abgeschnitten wird
+  const edge = p => p > 85 ? "left:auto;right:0;transform:none;" : p < 15 ? "left:0;transform:none;" : "";
+  rows.forEach((r, i) => { const p = pos(r.lim);
+    h += `<div class="tick" style="left:${p}%;--c:${r.c}"><span style="top:${-16 - (i % 3) * 14}px;${edge(p)}">${r.short}</span></div>`; });
+  const pu = pos(u);
+  h += `<div class="cur" style="left:${pu}%"><span style="${edge(pu)}">dein Bauteil: U = ${fmt(u, 2)}</span></div></div>`;
+  h += `<div class="tbl"><div class="srows"><div class="srow sh"><span></span><span>Vergleichswert</span><span>U [W/(m²K)]</span><span>Status</span><span>Nötige Zusatzdämmung ${info("dd")}</span><span>Quelle</span></div>`;
+  rows.forEach(r => {
+    const ok = r.ok;
+    const typ = r.kind === "Bestand (typisch)";
+    const dd = (1 / r.lim - rt) * lamIns * 100;
+    h += `<div class="srow"><span class="dot" style="background:${r.c}"></span>
+      <span>${r.name} <span class="tag">${r.kind}</span>${info(r.help)}</span>
+      <span>${typ ? "≈" : "≤"} ${fmt(r.lim, 2)}</span>
+      <span>${ok ? `<span class="badge ok">✓ ${r.special || (typ ? "besser" : "erfüllt")}</span>${r.special ? info("kern") : ""}` : `<span class="badge bad">✗ ${typ ? "schlechter" : "nicht erfüllt"}</span>`}</span>
+      <span>${ok || typ ? "–" : `+ ${fmt(dd, 1)} cm ${insName}`}</span>
+      <span class="src">${r.url ? `<a href="${r.url}" target="_blank" rel="noopener">${r.src}</a>` : r.src}</span></div>`;
+  });
+  box.innerHTML = h + `</div></div>`;
+}
+
+// Wärmedurchlasswiderstand ruhender Luftschichten nach DIN EN ISO 6946 (Tabelle, linear interpoliert).
+// Richtung des Wärmestroms aus Rsi: 0,10 aufwärts, 0,13 horizontal, 0,17 abwärts
+function airR(dcm) {
+  const mm = dcm * 10, rsi = parseFloat($("rsi").value) || 0.13;
+  const D = [0, 5, 7, 10, 15, 25, 50, 100, 300];
+  const T = rsi < 0.115 ? [0, 0.11, 0.13, 0.15, 0.16, 0.16, 0.16, 0.16, 0.16]   // aufwärts
+          : rsi > 0.15  ? [0, 0.11, 0.13, 0.15, 0.17, 0.19, 0.21, 0.22, 0.23]   // abwärts
+          :               [0, 0.11, 0.13, 0.15, 0.17, 0.18, 0.18, 0.18, 0.18];  // horizontal
+  if (mm <= 0) return 0;
+  if (mm >= 300) return T[T.length - 1];
+  const i = D.findIndex(x => x >= mm);
+  return T[i - 1] + (T[i] - T[i - 1]) * (mm - D[i - 1]) / (D[i] - D[i - 1]);
+}
+
+// kleinstes λ aller Einblas-Schichten (für die Kerndämmungs-Sonderregeln)
+function kernLambda(L) {
+  return Math.min(Infinity, ...L.filter(l => MAT[l.name].g === "Einblasdämmung" && l.l > 0 && l.d > 0).map(l => l.l));
+}
+
+// ================= Bauteil-Zeichnung zum Anklicken =================
+const HOUSE_SVG = `<svg class="dsvg" viewBox="0 0 480 292">
+  <rect x="0" y="222" width="480" height="70" fill="#efe6d8"/>
+  <polygon points="52,108 170,30 288,108" fill="#f3f4f6"/>
+  <rect x="72" y="110" width="196" height="104" fill="#fff1e0"/>
+  <rect x="280" y="152" width="150" height="62" fill="#fff1e0"/>
+  <rect x="72" y="224" width="196" height="56" fill="#e5e7eb"/>
+  <rect x="60" y="224" width="12" height="58" fill="#a8a29e"/><rect x="268" y="224" width="12" height="58" fill="#a8a29e"/>
+  <rect x="60" y="280" width="220" height="8" fill="#a8a29e"/>
+  <g data-pick="steil" style="--pf:#8b5a2b"><title>Steildach</title><polygon points="34,110 170,14 306,110 290,110 170,30 50,110"/></g>
+  <g data-pick="ogd" style="--pf:#9ca3af"><title>Oberste Geschossdecke</title><rect x="60" y="100" width="220" height="10"/></g>
+  <g data-pick="wand" style="--pf:#b77b54"><title>Außenwand</title><rect x="60" y="110" width="12" height="104"/><rect x="268" y="110" width="12" height="32"/><rect x="430" y="152" width="12" height="62"/></g>
+  <g data-pick="innen" style="--pf:#d6d3cb"><title>Innenwand</title><rect x="166" y="110" width="8" height="104"/><rect x="268" y="152" width="12" height="62"/></g>
+  <g data-pick="flach" style="--pf:#4b5563"><title>Flachdach</title><rect x="268" y="142" width="174" height="10"/></g>
+  <g data-pick="keller" style="--pf:#9ca3af"><title>Kellerdecke</title><rect x="60" y="214" width="220" height="10"/></g>
+  <g data-pick="boden" style="--pf:#6b7280"><title>Bodenplatte</title><rect x="280" y="214" width="162" height="12"/></g>
+  <text x="246" y="50">Steildach</text>
+  <text x="170" y="92" text-anchor="middle" class="s">Dachraum (unbeheizt)</text>
+  <text x="120" y="125" text-anchor="middle" class="s">↑ ob. Geschossdecke</text>
+  <text x="118" y="168" text-anchor="middle">Wohnraum</text><text x="222" y="168" text-anchor="middle">Wohnraum</text>
+  <text x="48" y="162" text-anchor="middle" transform="rotate(-90 48 162)">Außenwand</text>
+  <text x="182" y="206" class="s">Innenwand</text>
+  <text x="355" y="136" text-anchor="middle">Flachdach</text>
+  <text x="355" y="188" text-anchor="middle">Anbau</text>
+  <text x="170" y="240" text-anchor="middle">Kellerdecke</text>
+  <text x="170" y="262" text-anchor="middle" class="s">Keller (unbeheizt)</text>
+  <text x="361" y="244" text-anchor="middle">Bodenplatte</text>
+  <text x="456" y="266" text-anchor="end" class="s">Erdreich</text>
+</svg>`;
+
+const COLD_SVG = `<svg class="dsvg" viewBox="0 0 480 292">
+  <rect x="0" y="0" width="348" height="232" fill="#fff1e0"/>
+  <rect x="378" y="0" width="102" height="232" fill="#f8fafc"/>
+  <rect x="0" y="232" width="480" height="60" fill="#efe6d8"/>
+  <rect x="112" y="92" width="236" height="124" fill="#dbeafe"/>
+  <g data-pick="Kühlzellen-Decke (Sandwichpaneel)" style="--pf:#94a3b8"><title>Kühlzellen-Decke (Sandwichpaneel)</title><rect x="100" y="80" width="248" height="12"/></g>
+  <g data-pick="Kühlzellen-Wand (Sandwichpaneel)" style="--pf:#94a3b8"><title>Kühlzellen-Wand (Sandwichpaneel)</title><rect x="100" y="92" width="12" height="124"/></g>
+  <g data-pick="Kühlraum massiv (Innendämmung)" style="--pf:#b77b54"><title>Kühlraum massiv (Innendämmung)</title><rect x="348" y="40" width="30" height="192"/></g>
+  <g data-pick="Kühlzellen-Boden (auf Bodenplatte)" style="--pf:#6b7280"><title>Kühlzellen-Boden (auf Bodenplatte)</title><rect x="100" y="216" width="248" height="16"/></g>
+  <text x="16" y="28">Halle / Umgebung (warm)</text>
+  <text x="230" y="150" text-anchor="middle">❄ Kühlzelle (kalt)</text>
+  <text x="224" y="72" text-anchor="middle">Decke (Sandwichpaneel)</text>
+  <text x="92" y="154" text-anchor="middle" transform="rotate(-90 92 154)">Wand (Paneel)</text>
+  <text x="392" y="136" text-anchor="middle" transform="rotate(-90 392 136)">Massivwand + Innendämmung</text>
+  <text x="224" y="252" text-anchor="middle">Boden (auf Bodenplatte)</text>
+  <text x="430" y="28" text-anchor="middle" class="s">außen</text>
+</svg>`;
+
+function markDrawing() {
+  const name = $("bauteil").value, b = BT()[name];
+  const key = mode === "kuehl" ? name : b.cat;
+  $("drawing").querySelectorAll("[data-pick]").forEach(p => p.classList.toggle("sel", p.dataset.pick === key));
+}
+$("drawing").addEventListener("click", e => {
+  const p = e.target.closest("[data-pick]"); if (!p) return;
+  const bt = BT(), key = p.dataset.pick;
+  let name = key;
+  if (mode === "haus") {
+    const grp = bt[$("bauteil").value].grp || "Standard";
+    const names = Object.keys(bt).filter(k => bt[k].cat === key);
+    name = names.find(k => (bt[k].grp || "Standard") === grp) || names[0];
+  }
+  if (!name || !bt[name]) return;
+  $("bauteil").value = name; setBauteil(); loadPreset();
+  showHelp("drawing");
+});
+
+// ================= Hilfe (Tooltip + Seitenleiste) =================
+const tip = $("tip");
+function showHelp(key) {
+  const h = HELP[key]; if (!h) return;
+  $("hTitle").innerHTML = h.t;
+  $("hBody").innerHTML = h.l || `<p>${h.s}</p>`;
+}
+document.addEventListener("mouseover", e => {
+  const el = e.target.closest(".info[data-help]");
+  if (!el) { tip.hidden = true; return; }
+  const h = HELP[el.dataset.help]; if (!h) return;
+  showHelp(el.dataset.help);
+  if (!h.s) { tip.hidden = true; return; }
+  tip.innerHTML = h.s; tip.hidden = false;
+  const r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+  tip.style.left = Math.max(8, Math.min(r.left - 10, innerWidth - tw - 8)) + "px";
+  tip.style.top = (r.bottom + th + 10 > innerHeight ? r.top - th - 6 : r.bottom + 6) + "px";
+});
+document.addEventListener("focusin", e => { const el = e.target.closest("[data-help]"); if (el) showHelp(el.dataset.help); });
+document.addEventListener("click", e => { const el = e.target.closest(".info[data-help]"); if (el) showHelp(el.dataset.help); });
+addEventListener("scroll", () => tip.hidden = true, { passive:true });
+$("hReset").addEventListener("click", () => showHelp("start"));
+
+// ================= Start =================
+$("mode").addEventListener("click", e => { const b = e.target.closest("button[data-mode]"); if (b && b.dataset.mode !== mode) setMode(b.dataset.mode); });
+$("bauteil").addEventListener("change", () => { setBauteil(); loadPreset(); });
+["rsi", "rse", "ti", "te", "phi", "phe", "days"].forEach(id => $(id).addEventListener("input", calc));
+$("preset").addEventListener("click", loadPreset);
+$("add").addEventListener("click", () => { addLayer(); calc(); });
+$("dinKlima").addEventListener("click", () => { setClimate(); calc(); });
+showHelp("start");
+setMode("haus");
+</script>
+</body>
+</html>
