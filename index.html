@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2563eb">
 <title>U-Wert-Rechner</title>
 <style>
   :root { --bg:#f5f6f8; --card:#fff; --ink:#1d2330; --muted:#6b7280; --line:#e3e6eb; --acc:#2563eb; --ok:#15803d; --bad:#b91c1c; }
@@ -165,6 +166,46 @@
     .srow > :nth-child(5)::before { content:"Zusatzdämmung: "; color:var(--muted); }
     .srow > :nth-child(6) { grid-area:src; }
   }
+
+  /* ===== Mobilversion ===== */
+  .hclose { display:none; }
+  #mbar { display:none; }
+  @media (max-width:1080px) {
+    /* Hilfe als Fenster, das von unten hereinfährt */
+    aside { position:fixed !important; left:0; right:0; bottom:0; z-index:80; max-height:72vh; overflow:auto;
+            transform:translateY(110%); transition:transform .25s ease; }
+    aside.open { transform:none; }
+    aside .card { margin:0; border-radius:14px 14px 0 0; border-left:0; border-top:4px solid #6366f1; box-shadow:0 -10px 30px #0003; }
+    .hclose { display:block; float:right; margin:-4px -4px 0 8px; padding:4px 10px; }
+  }
+  @media (max-width:760px) {
+    .wrap { padding:12px 10px 84px; gap:12px; }
+    .card { padding:12px; margin-bottom:12px; }
+    h1 { font-size:21px; }
+    h2 { font-size:16px; }
+    .sub { font-size:12.5px; }
+    .big { font-size:36px; }
+    select, input { font-size:16px; }            /* verhindert Auto-Zoom auf dem iPhone */
+    .seg { display:flex; width:100%; }
+    .seg button { flex:1; padding:10px 8px; }
+    .info { width:20px; height:20px; font-size:12px; }   /* größere Tippfläche */
+    button.mv, button.x { padding:6px 10px; }
+    .dsvg text { font-size:13px; }
+    .dsvg text.s { font-size:12px; }
+    .stack .side { flex-basis:48px; }
+    /* feste Ergebnisleiste unten */
+    #mbar { display:flex; position:fixed; left:0; right:0; bottom:0; z-index:70; gap:8px; align-items:center;
+            padding:8px 10px calc(8px + env(safe-area-inset-bottom)); background:#fff; border-top:1px solid var(--line); box-shadow:0 -4px 16px #0002; }
+    #mbU { border:0; background:none; font-weight:700; font-size:17px; padding:4px; white-space:nowrap; }
+    #mbU small { font-weight:500; color:var(--muted); font-size:12px; }
+    #mbS { flex:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    #mbS .badge { font-size:12px; margin:0; }
+    #mbHelp { width:36px; height:36px; flex:none; border-radius:50%; padding:0; font-weight:700; background:#e0e7ff; color:#3730a3; border:0; }
+    /* Baustoff-Auswahl als Fenster von unten */
+    #picker { position:fixed; left:0 !important; right:0; top:auto !important; bottom:0; width:auto; max-width:none;
+              border-radius:14px 14px 0 0; padding:12px; z-index:90; }
+    #plist { max-height:50vh; }
+  }
 </style>
 </head>
 <body>
@@ -287,8 +328,9 @@
   <footer style="text-align:center;color:var(--muted);font-size:13px;padding:8px 0 0">Made by Florian Lind and Claude</footer>
 </main>
 
-<aside>
+<aside id="help">
   <div class="card">
+    <button id="hClose" class="hclose" type="button" aria-label="Hilfe schließen">✕</button>
     <h3 id="hTitle"></h3>
     <div id="hBody"></div>
     <button id="hReset">↺ Kurzanleitung</button>
@@ -302,6 +344,11 @@
   <div id="plist"></div>
 </div>
 <div id="tip" hidden></div>
+<div id="mbar">
+  <button id="mbU" type="button" title="Zum Ergebnis">U = –</button>
+  <span id="mbS"></span>
+  <button id="mbHelp" type="button" aria-label="Hilfe">?</button>
+</div>
 
 <script>
 // ================= Baustoffe =================
@@ -815,6 +862,10 @@ function calc() {
       : `<span class="badge bad">✗ q = ${fmt(q,1)} W/m² > 8 W/m² – mehr Dämmung (Richtwert Kühlraum)</span>`;
   }
 
+  // Ergebnisleiste (Mobil)
+  $("mbU").innerHTML = rt > 0 ? `U = ${fmt(u)} <small>W/(m²K)</small>` : "U = –";
+  $("mbS").innerHTML = $("geg").querySelector(".badge")?.outerHTML || "";
+
   $("stack").innerHTML = `<div class="side">${M.inn}</div>` +
     L.filter(p => p.d > 0).map(p =>
       `<div style="flex:${Math.max(p.d, 0.8)} 1 0;background:${p.c}" title="${p.name}, ${fmt(p.d,2)} cm">${p.d >= 4 ? p.name : ""}</div>`
@@ -939,7 +990,9 @@ function glaser(pts, L, pi, pe) {
 // ================= Diagramme =================
 function drawChart(pts, L, ti, te, td, plane) {
   const M = MODES[mode];
-  const W = 700, H = 260, Lm = 60, Rm = 60, T = 16, B = 34, air = 40;
+  const svg = $("chart"), W = chartWidth(svg), H = 260, nar = W < 520;
+  const Lm = nar ? 46 : 60, Rm = nar ? 46 : 60, T = 16, B = 34, air = nar ? 22 : 40;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const total = pts[pts.length - 1].x || 1;
   const x0 = Lm + air, x1 = W - Rm - air;
   const X = x => x0 + (x / total) * (x1 - x0);
@@ -975,7 +1028,9 @@ function drawChart(pts, L, ti, te, td, plane) {
 
 function drawGlaser(pts, L, hull, A, B, planes) {
   const M = MODES[mode];
-  const W = 700, H = 270, Lm = 64, Rm = 64, T = 16, Bm = 40;
+  const svg = $("gchart"), W = chartWidth(svg), H = 270, nar = W < 520;
+  const Lm = nar ? 54 : 64, Rm = nar ? 40 : 64, T = 16, Bm = 40;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const S = pts[pts.length - 1].sd;
   // Schichtbreite logarithmisch nach sd, damit Folien/Bleche nicht alles verdecken
   const wts = L.map(l => Math.log10(1 + 20 * l.sd) + 0.15);
@@ -1014,7 +1069,7 @@ function drawGlaser(pts, L, hull, A, B, planes) {
   s += `<text x="${W - Rm - 4}" y="${Y(B.y) - 6}" font-size="11" fill="#2563eb" text-anchor="end">p = ${fmt(B.y,0)} Pa</text>`;
   s += `<text x="${Lm}" y="${H - 14}" font-size="11" fill="#6b7280">${M.inn}</text>`;
   s += `<text x="${W - Rm}" y="${H - 14}" font-size="11" fill="#6b7280" text-anchor="end">${M.aus}</text>`;
-  s += `<text x="${W / 2}" y="${H - 14}" font-size="11" fill="#6b7280" text-anchor="middle">s<tspan font-size="8" dy="2">d</tspan><tspan dy="-2">-Achse (log. gestaucht) · Σ s</tspan><tspan font-size="8" dy="2">d</tspan><tspan dy="-2"> = ${fmtSd(S)} m</tspan></text>`;
+  s += `<text x="${W / 2}" y="${H - 14}" font-size="11" fill="#6b7280" text-anchor="middle">${nar ? "" : `s<tspan font-size="8" dy="2">d</tspan><tspan dy="-2">-Achse (log. gestaucht) · </tspan>`}Σ s<tspan font-size="8" dy="2">d</tspan><tspan dy="-2"> = ${fmtSd(S)} m</tspan></text>`;
   $("gchart").innerHTML = s;
 }
 
@@ -1166,14 +1221,18 @@ $("drawing").addEventListener("click", e => {
 
 // ================= Hilfe (Tooltip + Seitenleiste) =================
 const tip = $("tip");
-function showHelp(key) {
+// Diagrammbreite = verfügbare Breite (Text bleibt auf dem Handy lesbar)
+function chartWidth(svg) { return Math.round(Math.max(320, Math.min(700, svg.parentElement.clientWidth || 700))); }
+const sheetMode = matchMedia("(max-width:1080px)"), noHover = matchMedia("(hover: none)");
+function showHelp(key, open = false) {
   const h = HELP[key]; if (!h) return;
   $("hTitle").innerHTML = h.t;
   $("hBody").innerHTML = h.l || `<p>${h.s}</p>`;
+  if (open && sheetMode.matches) { $("help").classList.add("open"); $("help").scrollTop = 0; }
 }
 document.addEventListener("mouseover", e => {
   const el = e.target.closest(".info[data-help]");
-  if (!el) { tip.hidden = true; return; }
+  if (!el || noHover.matches) { tip.hidden = true; return; }
   const h = HELP[el.dataset.help]; if (!h) return;
   showHelp(el.dataset.help);
   if (!h.s) { tip.hidden = true; return; }
@@ -1183,9 +1242,19 @@ document.addEventListener("mouseover", e => {
   tip.style.top = (r.bottom + th + 10 > innerHeight ? r.top - th - 6 : r.bottom + 6) + "px";
 });
 document.addEventListener("focusin", e => { const el = e.target.closest("[data-help]"); if (el) showHelp(el.dataset.help); });
-document.addEventListener("click", e => { const el = e.target.closest(".info[data-help]"); if (el) showHelp(el.dataset.help); });
+document.addEventListener("click", e => {
+  const el = e.target.closest(".info[data-help]");
+  if (el) { e.preventDefault(); showHelp(el.dataset.help, true); }   // preventDefault: kein Fokus aufs Feld (Tastatur bleibt zu)
+  else if ($("help").classList.contains("open") && !e.target.closest("#help") && !e.target.closest("#mbHelp")) $("help").classList.remove("open");
+});
 addEventListener("scroll", () => tip.hidden = true, { passive:true });
 $("hReset").addEventListener("click", () => showHelp("start"));
+$("hClose").addEventListener("click", () => $("help").classList.remove("open"));
+$("mbHelp").addEventListener("click", () => showHelp("start", true));
+$("mbU").addEventListener("click", () => $("u").scrollIntoView({ behavior:"smooth", block:"center" }));
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("help").classList.remove("open"); });
+let resizeTimer;
+addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(calc, 150); });
 
 // ================= Start =================
 $("mode").addEventListener("click", e => { const b = e.target.closest("button[data-mode]"); if (b && b.dataset.mode !== mode) setMode(b.dataset.mode); });
