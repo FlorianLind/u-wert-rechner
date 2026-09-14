@@ -7,12 +7,15 @@ Webbasierter Rechner für Lernzwecke (Techniker-Schule): U-Wert, Temperaturverla
 ## Funktionen
 
 - Schichtaufbau mit Suche, farbigen Kategorien, λ- und μ-Werten, Verschieben per Drag & Drop
-- U-Wert nach DIN EN ISO 6946 (homogene Schichten, Luftschichten nach Tabellenwerten)
-- Temperaturverlauf, Taupunkt, Schimmelkriterium f<sub>Rsi</sub>
+- U-Wert nach DIN EN ISO 6946 – Luftschichten nach Tabellenwerten, **Holzanteil** (Sparren/Ständer) als inhomogenes Bauteil (oberer/unterer Grenzwert)
+- **Rechenweg** mit allen eingesetzten Zahlen
+- Temperaturverlauf, Taupunkt, Schimmel-Check nach DIN 4108-2 (R<sub>si</sub> = 0,25)
 - Tauwassernachweis nach Glaser (vereinfacht, DIN 4108-3)
+- **Sommerlicher Wärmeschutz**: Phasenverschiebung, TAV, Abminderungsfaktor und Zeitverschiebung nach DIN EN ISO 13786
 - Betriebsfall „Kühlzelle“ (warme Seite außen)
 - Einordnung: typische Altbau-Werte (IWU), GEG Anlage 1 und 7, BEG EM, Passivhaus – mit Quellen
-- Anklickbare Bauteil-Zeichnung, Tooltips und Hilfe-Seitenleiste
+- **Kurzer Teilen-Link** (Aufbau steckt im Link), **Variantenvergleich** A/B, **PDF-Export**
+- Anklickbare Bauteil-Zeichnung, Tooltips, Hilfe, Mobilversion mit fester Ergebnisleiste
 
 ## Hinweis
 

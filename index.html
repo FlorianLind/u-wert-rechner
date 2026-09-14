@@ -26,6 +26,8 @@
   td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
   td input.small { width:84px; text-align:right; }
   td input.small.mu { width:96px; }
+  td input.small.wood { width:62px; }
+  td .rw { display:block; font-size:11px; color:#8b5a2b; white-space:nowrap; }
   button { font:inherit; cursor:pointer; border:1px solid var(--line); background:#fff; border-radius:6px; padding:6px 12px; color:var(--ink); }
   button.primary { background:var(--acc); color:#fff; border-color:var(--acc); }
   button.x { padding:4px 9px; color:var(--bad); }
@@ -127,6 +129,54 @@
   .src { font-size:12px; }
   .src a, .note a, #hBody a { color:var(--acc); }
 
+  /* Rechenweg */
+  #rwBox summary { cursor:pointer; list-style:none; }
+  #rwBox summary::-webkit-details-marker { display:none; }
+  .rw-sum { font-weight:700; font-size:17px; }
+  #rwBox[open] .rw-sum::after { content:" ▲"; font-size:12px; color:var(--muted); }
+  #rwBox:not([open]) .rw-sum::after { content:" ▼"; font-size:12px; color:var(--muted); }
+  .rw-step { margin:14px 0 0; }
+  .rw-step h4 { margin:0 0 4px; font-size:14px; }
+  .rw-f { font-family:ui-monospace, Consolas, "Courier New", monospace; font-size:13px; background:#f8fafc; border:1px solid var(--line);
+          border-radius:6px; padding:5px 8px; margin:3px 0; overflow-wrap:anywhere; }
+
+  /* Werkzeugleiste, Hinweis-Toast, Vergleich */
+  .toolbar { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-left:auto; }
+  .toolbar button { padding:7px 12px; }
+  #toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); z-index:120; background:#1d2330; color:#fff;
+           padding:10px 14px; border-radius:10px; box-shadow:0 8px 24px #0005; max-width:min(560px, calc(100vw - 24px)); font-size:14px; }
+  #toast input { margin-top:6px; font-size:13px; color:var(--ink); }
+  table.cmp { width:100%; border-collapse:collapse; font-size:14px; table-layout:fixed; }
+  table.cmp tr > :nth-child(1) { width:22%; }
+  table.cmp tr > :nth-child(4) { width:16%; }
+  @container (max-width: 560px) { table.cmp tr > :nth-child(1) { width:30%; } }
+  table.cmp th, table.cmp td { padding:6px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; overflow-wrap:anywhere; }
+  table.cmp th { font-size:12px; }
+  table.cmp td.better { background:#dcfce7; font-weight:600; }
+  table.cmp td.diff { color:var(--muted); white-space:nowrap; }
+  .cmp-btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  @container (max-width: 560px) { table.cmp .diff { display:none; } table.cmp { font-size:13px; } }
+
+  /* Druck / PDF */
+  .print-head { display:none; }
+  @media print {
+    @page { size:A4; margin:12mm; }
+    body { padding-top:0; background:#fff; font-size:10pt; }
+    main { container-type:normal; }
+    #mbar, aside, #picker, #tip, #toast, .toolbar, .seg, .cap, #drawing, .info, .grip, table.lay td:nth-child(9), table.lay th:last-child,
+    .cmp-btns, #add, #preset, #dinKlima, #hReset { display:none !important; }
+    .wrap { display:block; max-width:none; padding:0; }
+    .card { break-inside:avoid; border:1px solid #bbb; margin-bottom:8px; padding:10px; }
+    .bt-card { display:block; }
+    .print-head { display:block; font-size:9pt; color:#555; border-bottom:1px solid #bbb; padding-bottom:4px; margin-bottom:8px; }
+    .matbtn { border:0 !important; padding:0; } .matbtn .car { display:none; }
+    input, select { border:0; padding:0; background:none; appearance:none; }
+    td input.small { width:auto; }
+    .rw-f { break-inside:avoid; }
+    a { color:inherit; }
+    h1 { font-size:18pt; }
+  }
+
   /* Kein horizontales Scrollen: bei wenig Platz werden Tabellen zu Karten */
   .wrap { overflow-x:clip; }
   main { container-type:inline-size; min-width:0; }
@@ -137,23 +187,25 @@
     table.lay, table.lay tbody { display:block; }
     table.lay thead { display:none; }
     table.lay tr { display:grid; grid-template-columns:auto repeat(3, minmax(0,1fr)); gap:8px 10px; padding:10px 0;
-                   grid-template-areas:"idx mat mat mat" "idx lam mu d" "idx r sd acts"; border-bottom:1px solid var(--line); }
+                   grid-template-areas:"idx mat mat mat" "idx lam mu d" "idx wood r sd" "idx acts acts acts"; border-bottom:1px solid var(--line); }
     table.lay td { display:block; padding:0; border:0; width:auto !important; text-align:left; }
     table.lay td:nth-child(1) { grid-area:idx; padding-top:8px; }
     table.lay td:nth-child(2) { grid-area:mat; }
     table.lay td:nth-child(3) { grid-area:lam; }
     table.lay td:nth-child(4) { grid-area:mu; }
     table.lay td:nth-child(5) { grid-area:d; }
-    table.lay td:nth-child(6) { grid-area:r; }
-    table.lay td:nth-child(7) { grid-area:sd; }
-    table.lay td:nth-child(8) { grid-area:acts; align-self:end; text-align:right; white-space:normal; }
-    table.lay td:nth-child(n+3):nth-child(-n+7)::before { display:block; font-size:11px; color:var(--muted); margin-bottom:2px; }
+    table.lay td:nth-child(6) { grid-area:wood; }
+    table.lay td:nth-child(7) { grid-area:r; }
+    table.lay td:nth-child(8) { grid-area:sd; }
+    table.lay td:nth-child(9) { grid-area:acts; text-align:right; white-space:normal; }
+    table.lay td:nth-child(n+3):nth-child(-n+8)::before { display:block; font-size:11px; color:var(--muted); margin-bottom:2px; }
     table.lay td:nth-child(3)::before { content:"λ [W/mK]"; }
     table.lay td:nth-child(4)::before { content:"μ [–]"; }
     table.lay td:nth-child(5)::before { content:"d [cm]"; }
-    table.lay td:nth-child(6)::before { content:"R [m²K/W]"; }
-    table.lay td:nth-child(7)::before { content:"sd [m]"; }
-    td input.small, td input.small.mu { width:100%; text-align:left; }
+    table.lay td:nth-child(6)::before { content:"Holzanteil [%]"; }
+    table.lay td:nth-child(7)::before { content:"R [m²K/W]"; }
+    table.lay td:nth-child(8)::before { content:"sd [m]"; }
+    td input.small, td input.small.mu, td input.small.wood { width:100%; text-align:left; }
 
     .srow.sh { display:none; }
     .srow { grid-template-columns:12px minmax(0,1fr) auto; grid-template-areas:"dot name name" ". lim st" ". dd dd" ". src src"; row-gap:4px; }
@@ -228,6 +280,7 @@
 </div>
 <div class="wrap">
 <main>
+  <div id="printHead" class="print-head"></div>
   <h1>U-Wert-Rechner</h1>
   <p class="sub">U = 1 / (R<sub>si</sub> + Σ d/λ + R<sub>se</sub>) · Temperaturverlauf · Taupunkt · Tauwasser nach Glaser (vereinfacht nach DIN EN ISO 6946 / DIN 4108-3)</p>
 
@@ -237,6 +290,12 @@
       <button data-mode="kuehl">❄️ Kühlzelle</button>
     </div>
     <i class="info" data-help="mode">i</i>
+    <div class="toolbar">
+      <button id="shareBtn" type="button" title="Link zu diesem Aufbau kopieren">🔗 Link kopieren</button>
+      <button id="cmpBtn" type="button" title="Aktuellen Aufbau als Variante A merken und vergleichen">⚖️ Vergleichen</button>
+      <button id="printBtn" type="button" title="Als PDF speichern oder drucken">🖨️ PDF</button>
+      <i class="info" data-help="tools">i</i>
+    </div>
   </div>
 
   <div class="card bt-card">
@@ -273,6 +332,7 @@
             <th class="num">λ [W/mK] <i class="info" data-help="lambda">i</i></th>
             <th class="num">μ [–] <i class="info" data-help="mu">i</i></th>
             <th class="num">d [cm] <i class="info" data-help="d">i</i></th>
+            <th class="num">Holz [%] <i class="info" data-help="holz">i</i></th>
             <th class="num">R [m²K/W] <i class="info" data-help="R">i</i></th>
             <th class="num">s<sub>d</sub> [m] <i class="info" data-help="sd">i</i></th>
             <th><i class="info" data-help="move">i</i></th>
@@ -291,9 +351,27 @@
         <div class="kv">U-Wert <i class="info" data-help="u">i</i> &nbsp; R<sub>T</sub> = <b id="rt">–</b> m²K/W <i class="info" data-help="rges">i</i></div>
         <div class="kv">Dicke gesamt = <b id="dt">–</b> cm &nbsp;·&nbsp; s<sub>d</sub> gesamt = <b id="sdt">–</b> m <i class="info" data-help="sd">i</i></div>
         <div style="margin-top:6px"><span id="geg"></span><i class="info" id="gegInfo" data-help="geg">i</i></div>
+        <div id="inhom"></div>
       </div>
     </div>
     <div class="stack" id="stack"></div>
+  </div>
+
+  <div class="card" id="cmpCard" hidden>
+    <h2>⚖️ Variantenvergleich <i class="info" data-help="vergleich">i</i></h2>
+    <div class="tbl"><table class="cmp" id="cmpTable"></table></div>
+    <div class="cmp-btns">
+      <button id="cmpSwap" type="button">⇄ A und B tauschen</button>
+      <button id="cmpSetA" type="button">📌 Aktuellen Stand als A merken</button>
+      <button id="cmpClose" type="button">✕ Vergleich beenden</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <details id="rwBox">
+      <summary><span class="rw-sum">🧮 Rechenweg anzeigen</span> <span class="muted">– alle Schritte mit eingesetzten Zahlen</span> <i class="info" data-help="rechenweg">i</i></summary>
+      <div id="rw"></div>
+    </details>
   </div>
 
   <div class="card">
@@ -339,6 +417,20 @@
     <div class="note">Vereinfachtes Glaser-Verfahren: stationäres Klima, Tauwasser nur an Schichtgrenzen, keine Kapillarleitung und keine Sorption. Für echte Nachweise DIN 4108-3 bzw. eine hygrothermische Simulation (z. B. WUFI) verwenden.</div>
   </div>
 
+  <div class="card" id="sumCard">
+    <h2>Sommerlicher Wärmeschutz <i class="info" data-help="sommer">i</i></h2>
+    <div class="result" style="gap:24px">
+      <div class="kv">Phasenverschiebung η = <b id="eta">–</b> h <i class="info" data-help="eta">i</i></div>
+      <div class="kv">TAV = <b id="tav">–</b> <i class="info" data-help="tav">i</i></div>
+      <div class="kv">Amplitudendämpfung 1/TAV = <b id="damp">–</b></div>
+      <div class="kv">ISO 13786 (Luft → Luft): f = <b id="fdec">–</b> · Δt = <b id="tshift">–</b> h <i class="info" data-help="fdec">i</i></div>
+    </div>
+    <div id="summsg" style="margin-top:8px"></div>
+    <div class="tbl" style="margin-top:8px"><svg id="schart" viewBox="0 0 700 210" style="width:100%;display:block"></svg></div>
+    <div class="legend"><span style="--c:#dc2626">Außenoberfläche (Beispiel ±10 K)</span><span style="--c:#2563eb">Innenoberfläche</span></div>
+    <div class="note">Periodisch eingeschwungener Zustand nach dem Matrixverfahren der DIN EN ISO 13786 (Periode 24 h, Innenluft konstant), im Gefach ohne Holz. Das ist kein Nachweis nach DIN 4108-2 (Sonneneintragskennwert) – dort zählen vor allem Fensterflächen und Verschattung.</div>
+  </div>
+
   <div class="card">
     <div class="note" style="margin-top:0">λ- und μ-Werte sind typische Bemessungswerte (Richtwerte nach DIN 4108-4 / DIN EN ISO 10456) und können in der Tabelle überschrieben werden. Für Nachweise die Herstellerangaben verwenden. Hinterlüftete Schichten (z. B. Dachziegel, Vorhangfassade) nicht eintragen – dafür R<sub>se</sub> = R<sub>si</sub> setzen.</div>
   </div>
@@ -361,6 +453,7 @@
   <div id="plist"></div>
 </div>
 <div id="tip" hidden></div>
+<div id="toast" hidden></div>
 
 <script>
 // ================= Baustoffe =================
@@ -402,15 +495,37 @@ const MATS = [
 const MAT = {};
 MATS.forEach(([g, gc, list]) => list.forEach(([n, l, mu, c, o]) => MAT[n] = { l, mu, c, g, gc, ...o }));
 
+// Rohdichte ρ [kg/m³] und spez. Wärmekapazität c [J/(kg·K)] für den sommerlichen Wärmeschutz
+// (typische Werte nach DIN EN ISO 10456 / DIN 4108-4, Richtwerte)
+const PHYS = {
+  "Gipsputz":[1200,1000], "Putzmörtel aus Kalk":[1800,1000], "Innenputz aus Kalkmörtel":[1800,1000],
+  "Kalkzementputz (außen)":[1800,1000], "Außenputz aus Zementmörtel":[2000,1000],
+  "Gipskartonplatte":[900,1000], "Gipsfaserplatte":[1150,1100], "Fliesen/Keramik":[2300,840],
+  "Stahlbeton":[2400,1000], "Normalbeton (unbewehrt)":[2300,1000], "Kalksandstein (ρ 1800)":[1800,1000],
+  "Kalkstein (Naturstein)":[2200,1000], "Vollziegel":[1800,1000], "Hohllochziegel (ρ 1200)":[1200,1000],
+  "Hochlochziegel":[800,1000], "Wärmedämmziegel":[650,1000], "Porenbeton":[400,1000], "Leichtbeton-Stein":[1000,1000],
+  "Vormauerziegel":[1800,1000], "Klinker (Vollklinker)":[2000,1000],
+  "Zementestrich":[2000,1000], "Anhydritestrich":[2100,1000], "Parkett / Holzdielen":[500,1600],
+  "Bitumenbahn / Abdichtung":[1100,1000], "PE-Folie (Dampfsperre)":[980,1800], "Dampfbremse (sd ≈ 2 m)":[1000,1500],
+  "Alu-Dampfsperre (sd ≥ 1500 m)":[1000,1000], "Stahlblech (Paneel)":[7800,450],
+  "Nadelholz (KVH)":[500,1600], "OSB-Platte":[650,1700], "Spanplatte":[600,1700], "Holzfaserplatte (Unterdeckung)":[250,2100],
+  "Mineralwolle WLS 035":[30,1030], "Mineralwolle WLS 040":[30,1030], "EPS WLS 040":[20,1450], "EPS grau WLS 032":[20,1450],
+  "XPS WLS 035":[35,1450], "PUR/PIR WLS 024":[35,1400], "Holzfaserdämmung":[50,2100], "Zellulose":[55,2000],
+  "Hanf / Flachs":[40,1600], "Schaumglas":[120,1000], "Trittschalldämmung":[100,1030],
+  "Zellulose-Einblasdämmung":[55,2000], "Holzfaser-Einblasdämmung":[45,2100], "Glaswolle-Einblasdämmung":[30,1030],
+  "Steinwolle-Einblasgranulat":[70,1030], "EPS-Dämmperlen grau (Kerndämmung)":[15,1450], "Perlite hydrophobiert (Kerndämmung)":[90,1000],
+  "Luftschicht, ruhend":[1.2,1000], "Luftschicht, schwach belüftet":[1.2,1000], "Eigener Wert …":[1000,1000]
+};
+
 // ================= Bauteile =================
 // cat = Bauteilkategorie für Grenzwerte/Zeichnung, grp = Gruppe in der Auswahlliste
 const BT_HAUS = {
   "Außenwand":                         { cat:"wand", rsi:0.13, rse:0.04,
     preset:[["Gipsputz",1.5],["Kalksandstein (ρ 1800)",17.5],["Mineralwolle WLS 035",16],["Kalkzementputz (außen)",1]] },
   "Holzständerwand (außen)":           { cat:"wand", rsi:0.13, rse:0.04,
-    preset:[["Gipskartonplatte",1.25],["OSB-Platte",1.5],["Mineralwolle WLS 035",16],["Holzfaserplatte (Unterdeckung)",6],["Kalkzementputz (außen)",0.8]] },
+    preset:[["Gipskartonplatte",1.25],["OSB-Platte",1.5],["Mineralwolle WLS 035",16,15],["Holzfaserplatte (Unterdeckung)",6],["Kalkzementputz (außen)",0.8]] },
   "Steildach (Zwischensparren)":       { cat:"steil", rsi:0.10, rse:0.10,
-    preset:[["Gipskartonplatte",1.25],["Dampfbremse (sd ≈ 2 m)",0.02],["Mineralwolle WLS 035",20],["Holzfaserplatte (Unterdeckung)",6]] },
+    preset:[["Gipskartonplatte",1.25],["Dampfbremse (sd ≈ 2 m)",0.02],["Mineralwolle WLS 035",20,12],["Holzfaserplatte (Unterdeckung)",6]] },
   "Flachdach":                         { cat:"flach", rsi:0.10, rse:0.04,
     preset:[["Gipsputz",1],["Stahlbeton",20],["Alu-Dampfsperre (sd ≥ 1500 m)",0.02],["PUR/PIR WLS 024",16],["Bitumenbahn / Abdichtung",1]] },
   "Oberste Geschossdecke":             { cat:"ogd", rsi:0.10, rse:0.10,
@@ -429,7 +544,7 @@ const BT_HAUS = {
   "Altbau-Außenwand + 14 cm WDVS (saniert)":         { grp:"Altbau", cat:"wand", rsi:0.13, rse:0.04,
     preset:[["Innenputz aus Kalkmörtel",1.5],["Vollziegel",36.5],["Kalkzementputz (außen)",2],["EPS grau WLS 032",14],["Kalkzementputz (außen)",1]] },
   "Altbau-Steildach 6 cm Dämmung (1970er)":          { grp:"Altbau", cat:"steil", rsi:0.10, rse:0.10,
-    preset:[["Gipskartonplatte",1.25],["Mineralwolle WLS 040",6]] },
+    preset:[["Gipskartonplatte",1.25],["Mineralwolle WLS 040",6,12]] },
   "Altbau-Kellerdecke Beton (unsaniert)":            { grp:"Altbau", cat:"keller", rsi:0.17, rse:0.17,
     preset:[["Parkett / Holzdielen",2.4],["Zementestrich",4],["Stahlbeton",14]] },
 
@@ -438,16 +553,16 @@ const BT_HAUS = {
   "Zweischaliges Mauerwerk + Kerndämmung (nachher)":  { grp:"Einblasdämmung", cat:"wand", kern:true, rsi:0.13, rse:0.04,
     preset:[["Innenputz aus Kalkmörtel",1.5],["Kalksandstein (ρ 1800)",17.5],["EPS-Dämmperlen grau (Kerndämmung)",6],["Vormauerziegel",11.5]] },
   "Holzbalkendecke, Zellulose eingeblasen (oberste Geschossdecke)": { grp:"Einblasdämmung", cat:"ogd", rsi:0.10, rse:0.10,
-    preset:[["Gipsputz",1.5],["Dampfbremse (sd ≈ 2 m)",0.02],["Zellulose-Einblasdämmung",22],["Holzfaserplatte (Unterdeckung)",2.2]] },
+    preset:[["Gipsputz",1.5],["Dampfbremse (sd ≈ 2 m)",0.02],["Zellulose-Einblasdämmung",22,12],["Holzfaserplatte (Unterdeckung)",2.2]] },
   "Steildach, Holzfaser zwischen Sparren eingeblasen": { grp:"Einblasdämmung", cat:"steil", rsi:0.10, rse:0.10,
-    preset:[["Gipskartonplatte",1.25],["Dampfbremse (sd ≈ 2 m)",0.02],["Holzfaser-Einblasdämmung",24],["Holzfaserplatte (Unterdeckung)",6]] },
+    preset:[["Gipskartonplatte",1.25],["Dampfbremse (sd ≈ 2 m)",0.02],["Holzfaser-Einblasdämmung",24,12],["Holzfaserplatte (Unterdeckung)",6]] },
   "Holzständerwand, Zellulose eingeblasen":            { grp:"Einblasdämmung", cat:"wand", rsi:0.13, rse:0.04,
-    preset:[["Gipskartonplatte",1.25],["OSB-Platte",1.5],["Zellulose-Einblasdämmung",20],["Holzfaserplatte (Unterdeckung)",6],["Kalkzementputz (außen)",0.8]] },
+    preset:[["Gipskartonplatte",1.25],["OSB-Platte",1.5],["Zellulose-Einblasdämmung",20,15],["Holzfaserplatte (Unterdeckung)",6],["Kalkzementputz (außen)",0.8]] },
 
   "Passivhaus-Außenwand (KS + 30 cm WDVS)":          { grp:"Passivhaus", cat:"wand", rsi:0.13, rse:0.04,
     preset:[["Gipsputz",1.5],["Kalksandstein (ρ 1800)",17.5],["EPS grau WLS 032",30],["Kalkzementputz (außen)",1]] },
   "Passivhaus-Dach (36 cm Zellulose)":               { grp:"Passivhaus", cat:"steil", rsi:0.10, rse:0.10,
-    preset:[["Gipskartonplatte",1.25],["OSB-Platte",1.5],["Zellulose",36],["Holzfaserplatte (Unterdeckung)",6]] },
+    preset:[["Gipskartonplatte",1.25],["OSB-Platte",1.5],["Zellulose",36,8],["Holzfaserplatte (Unterdeckung)",6]] },
   "Passivhaus-Bodenplatte (30 cm XPS)":              { grp:"Passivhaus", cat:"boden", rsi:0.17, rse:0.00,
     preset:[["Parkett / Holzdielen",1.5],["Zementestrich",6],["Trittschalldämmung",3],["Stahlbeton",25],["XPS WLS 035",30]] }
 };
@@ -651,7 +766,7 @@ Object.assign(HELP, {
     <p><b>Typische Dicken – vorgegeben durch den Hohlraum:</b></p>
     <ul><li>Kerndämmung zweischaliges Mauerwerk: Luftschicht meist 4–8 cm (üblich ab ca. 4–6 cm nutzbarer Breite)</li><li>Holzbalkendecke: Balkenhöhe, oft 16–24 cm</li><li>Dachschräge zwischen den Sparren: Sparrenhöhe, oft 12–24 cm</li><li>Holzständerwand: Ständerbreite, oft 12–24 cm</li><li>Offen auf oberste Geschossdecke: frei wählbar, oft 20–30 cm</li></ul>
     <p><b>Wichtig:</b> In der Kerndämmung (Mauerwerk) nur <b>hydrophobe</b> Stoffe wie Mineralwolle, EPS-Perlen oder hydrophobiertes Perlite verwenden. Zellulose und Holzfaser gehören in den trockenen Holzbau bzw. ins Dach. Die Ausführung durch einen zugelassenen Fachbetrieb ist Pflicht, damit der Stoff setzungssicher mit der richtigen Rohdichte eingebracht wird.</p>
-    <p class="muted">Bei Holzbauteilen rechnet der Rechner nur das Gefach. Sparren, Balken und Ständer verschlechtern den echten U-Wert meist um 10–20 %.</p>
+    <p class="muted">Sparren, Balken und Ständer verschlechtern den U-Wert meist um 10–20 %. Trage ihren Anteil in der Spalte „Holz %“ der Dämmschicht ein.</p>
     <p class="muted">Quellen: <a href="https://www.energie-fachberater.de/daemmung/einblasdaemmung-welche-daemmstoffe-eignen-sich.php" target="_blank" rel="noopener">energie-fachberater.de</a> (λ-Werte, Einsatz), <a href="https://www.appiarius-daemmtechnik.de/daemmatlas/verfahren/kerndaemmung-zweischaliges-mauerwerk" target="_blank" rel="noopener">Appiarius Dämmatlas</a> (Hohlraumbreite, Stoffe).</p>` },
   kern: { t:"Sonderregeln Kerndämmung / Hohlraum", s:"Bei begrenzter Dicke gilt: Hohlraum vollständig füllen. GEG: λ ≤ 0,045 für Einblasdämmung. BEG: λ ≤ 0,035.", l:`
     <p>Bei zweischaligem Mauerwerk ist die Dämmdicke durch die Luftschicht begrenzt. Den U-Wert von 0,24 bzw. 0,20 erreicht man damit meist nicht. Deshalb gibt es Sonderregeln:</p>
@@ -663,6 +778,47 @@ Object.assign(HELP, {
     <p><b>Luftschichten</b> haben kein festes λ. Ihr R hängt von Dicke und Wärmestromrichtung ab und wird aus der Tabelle der DIN EN ISO 6946 genommen:</p>
     <ul><li>ruhend, Wärmestrom horizontal (Wand): 1 cm 0,15 · ab 2,5 cm 0,18</li><li>aufwärts (Dach): ab 1,5 cm 0,16</li><li>abwärts (Boden): 2,5 cm 0,19 · 5 cm 0,21 · 10 cm 0,22 · 30 cm 0,23</li><li>schwach belüftet: halber Wert der ruhenden Luftschicht</li><li>stark belüftet (Hinterlüftung): Luftschicht und alles außen davon <b>nicht</b> eintragen, stattdessen R<sub>se</sub> = R<sub>si</sub></li></ul>
     <p class="muted">Eine 6-cm-Luftschicht bringt also nur R ≈ 0,18 – gleich viel wie ca. 0,6 cm Dämmstoff mit λ 0,035. Deshalb lohnt die Kerndämmung so sehr.</p>` },
+  tools: { t:"Link, Vergleich &amp; PDF", s:"Link kopieren = Aufbau teilen · Vergleichen = zwei Varianten nebeneinander · PDF = Ausdruck mit Rechenweg.", l:`
+    <ul><li><b>🔗 Link kopieren:</b> Der ganze Aufbau (Bauteil, Schichten, Dicken, Holzanteil, Klima) steckt in einem kurzen Link. Wer ihn öffnet, sieht genau deinen Aufbau. Die Adresszeile aktualisiert sich außerdem laufend – ein Lesezeichen merkt sich den Stand.</li>
+        <li><b>⚖️ Vergleichen:</b> Merkt den aktuellen Aufbau als Variante A. Danach änderst du z. B. den Dämmstoff oder die Dicke – die Tabelle zeigt A und B nebeneinander, das Bessere grün.</li>
+        <li><b>🖨️ PDF:</b> Öffnet den Druckdialog. Dort „Als PDF speichern“ wählen. Der Rechenweg wird automatisch mitgedruckt, Bedienelemente werden ausgeblendet.</li></ul>` },
+  vergleich: { t:"Variantenvergleich", s:"Variante A (gemerkt) und B (aktuell) nebeneinander – das Bessere ist grün markiert.", l:`
+    <p>So vergleichst du zwei Dämmungen:</p>
+    <ol><li>Aufbau mit Dämmung 1 einstellen und <b>⚖️ Vergleichen</b> klicken → das ist Variante A.</li><li>Dämmstoff oder Dicke ändern → das ist Variante B.</li><li>Die Tabelle zeigt U-Wert, Dicke, Niveau, Tauwasser, Schimmel-Check, Phasenverschiebung und TAV beider Varianten.</li></ol>
+    <p>„⇄ A und B tauschen“ lädt Variante A wieder in den Editor.</p>` },
+  rechenweg: { t:"Rechenweg", s:"Zeigt jeden Rechenschritt mit den eingesetzten Zahlen – zum Nachvollziehen und Kontrollieren.", l:`
+    <p>Der Rechenweg zeigt alle Schritte mit den aktuellen Zahlen: Schichtwiderstände, R<sub>T</sub>, ggf. Holzanteil, U-Wert, Temperaturen, Taupunkt, Schimmel-Check, Glaser und sommerlichen Wärmeschutz.</p>
+    <p>Er aktualisiert sich bei jeder Änderung und wird beim PDF-Export mitgedruckt.</p>` },
+  frsi: { t:"Schimmel-Check f<sub>Rsi</sub> (DIN 4108-2)", s:"Mit Rsi = 0,25 (Ecken, hinter Möbeln): fRsi ≥ 0,70 bzw. θsi ≥ 12,6 °C bei 20 °C / −5 °C.", l:`
+    <p>Schimmel wächst schon ab etwa 80 % Luftfeuchte direkt an der Oberfläche. DIN 4108-2 fordert deshalb einen <b>Temperaturfaktor f<sub>Rsi</sub> ≥ 0,70</b>. Bei 20 °C innen und −5 °C außen heißt das θ<sub>si</sub> ≥ 12,6 °C.</p>
+    <p>Gerechnet wird mit dem erhöhten <b>R<sub>si</sub> = 0,25 m²K/W</b>. Das bildet ungünstige Stellen ab, an denen weniger warme Luft an die Wand kommt, z. B. Raumecken oder hinter Schränken.</p>
+    <p>f<sub>Rsi</sub> = (θ<sub>si</sub> − θ<sub>e</sub>) / (θ<sub>i</sub> − θ<sub>e</sub>) = 1 − R<sub>si</sub> / R<sub>T</sub></p>
+    <p><b>Echte Wärmebrücken</b> (Außenecken, Deckenauflager, Fensteranschlüsse, Balkone) sind zwei- oder dreidimensional. Dafür braucht es eine numerische Wärmebrückenberechnung nach DIN EN ISO 10211 (Programme wie Flixo oder THERM) oder einen Wärmebrückenkatalog. Der Rechner prüft das ungestörte Bauteil.</p>` },
+  sommer: { t:"Sommerlicher Wärmeschutz", s:"Wie stark und wie spät die Hitze von außen innen ankommt: Phasenverschiebung und TAV.", l:`
+    <p>Im Sommer heizt die Sonne die Außenoberfläche stark auf (Dach bis 60–70 °C). Die Temperaturwelle wandert durch das Bauteil – dabei wird sie <b>kleiner</b> (Dämpfung) und <b>kommt später</b> an (Phasenverschiebung).</p>
+    <ul><li><b>Phasenverschiebung η</b>: ideal 10–12 h – dann kommt das Maximum nachts an und kann weggelüftet werden.</li><li><b>Amplitudendämpfung 1/TAV</b>: gute Werte ab 20.</li></ul>
+    <p>Speicherfähige Stoffe mit hoher Rohdichte und Wärmekapazität (Holzfaser, Zellulose, Mauerwerk) verschieben die Welle stärker als leichte Dämmstoffe (Mineralwolle, EPS).</p>
+    <p class="muted">Berechnung nach dem Matrixverfahren der DIN EN ISO 13786 (Periode 24 h, Innenluft konstant). Zielwerte nach <a href="https://www.ubakus.de/berechnung-des-hitzeschutzes/" target="_blank" rel="noopener">ubakus.de</a>, Definition siehe <a href="https://wiki.energie-m.de/Temperatur-Amplituden-Verh%C3%A4ltnis" target="_blank" rel="noopener">Energie-Wiki</a>. Der eigentliche Nachweis nach DIN 4108-2 (Sonneneintragskennwert) hängt vor allem an Fenstern und Verschattung.</p>` },
+  eta: { t:"Phasenverschiebung η", s:"Zeit zwischen dem Temperaturmaximum außen und innen – ideal 10–12 h.", l:`
+    <p>Die Phasenverschiebung ist die Zeit in Stunden zwischen der höchsten Temperatur an der Außenoberfläche und der höchsten Temperatur an der Innenoberfläche.</p>
+    <p>Beispiel: Maximum außen um 14 Uhr, η = 11 h → Maximum innen erst um 1 Uhr nachts. Dann ist es draußen kühl und man kann lüften.</p>
+    <p class="muted">Gerechnet von Oberfläche zu Oberfläche bei konstanter Innenlufttemperatur. Tabellen und Herstellerangaben nennen teils die etwas größere Zeitverschiebung Δt nach DIN EN ISO 13786 (Luft zu Luft) – beide Werte stehen im Rechner.</p>` },
+  tav: { t:"Temperaturamplitudenverhältnis TAV", s:"Schwankung innen / Schwankung außen (Innenluft konstant). 0,05 = nur 5 % kommen innen an.", l:`
+    <p>TAV = Temperaturschwankung an der Innenoberfläche / Temperaturschwankung an der Außenoberfläche, bei konstanter Innenlufttemperatur.</p>
+    <p>Der Kehrwert 1/TAV heißt <b>Amplitudendämpfung</b>. Gute Werte liegen ab 20 (TAV ≤ 0,05).</p>` },
+  fdec: { t:"Kennwerte nach DIN EN ISO 13786", s:"Luft zu Luft: Abminderungsfaktor f = |Y12| / U und Zeitverschiebung Δt des Wärmestroms.", l:`
+    <p>Die Norm beschreibt das Bauteil von <b>Außenluft zu Innenluft</b> mit der periodischen Wärmeübertragung Y<sub>12</sub> = −1 / Z<sub>12</sub>:</p>
+    <ul><li><b>Abminderungsfaktor f = |Y<sub>12</sub>| / U</b> – wie groß die Wärmestromschwankung innen im Vergleich zum stationären Fall ist. Je kleiner, desto besser.</li>
+        <li><b>Zeitverschiebung Δt</b> – Verzögerung des Wärmestroms innen gegenüber der Außenlufttemperatur. Sie ist etwas größer als die Phasenverschiebung von Oberfläche zu Oberfläche.</li></ul>
+    <p class="muted">Kontrolle der Rechnung: Für den Prüffall 20 cm Beton (λ = 1,8, ρ = 2400, c = 1000, R<sub>s</sub> = 0,13 / 0,04) liefert der Rechner Δt = 5,68 h – die Referenz (<a href="https://quickfield.com/advanced/iso_13786_2007_case_d1.htm" target="_blank" rel="noopener">QuickField, ISO-13786-Fall D1</a>) nennt 5,65 h.</p>` },
+  holz: { t:"Holzanteil (inhomogene Schicht)", s:"Anteil von Sparren, Balken oder Ständern in dieser Schicht in % – typisch 10–15 %.", l:`
+    <p>In Holzbauteilen liegt die Dämmung zwischen Sparren, Balken oder Ständern. Holz (λ ≈ 0,13) leitet Wärme 3–4-mal besser als Dämmstoff – der echte U-Wert ist deshalb schlechter als im reinen Gefach.</p>
+    <p><b>Holzanteil = Holzbreite / Achsabstand</b>, z. B. Sparren 8 cm bei 70 cm Abstand → 11 %. Ständerwand inkl. Schwelle und Rähm ≈ 15 %.</p>
+    <p>Berechnung nach DIN EN ISO 6946 für inhomogene Bauteile:</p>
+    <ul><li><b>Oberer Grenzwert R'<sub>T</sub>:</b> Gefach- und Holzbereich werden getrennt durchgerechnet und flächengewichtet parallel geschaltet: 1/R'<sub>T</sub> = Σ f<sub>j</sub> / R<sub>T,j</sub></li>
+        <li><b>Unterer Grenzwert R''<sub>T</sub>:</b> Jede inhomogene Schicht bekommt einen flächengewichteten Widerstand: 1/R'' = f<sub>Holz</sub>/R<sub>Holz</sub> + f<sub>Gefach</sub>/R<sub>Gefach</sub></li>
+        <li><b>R<sub>T</sub> = (R'<sub>T</sub> + R''<sub>T</sub>) / 2</b> · relativer Fehler e = (R'<sub>T</sub> − R''<sub>T</sub>) / (2·R<sub>T</sub>)</li></ul>
+    <p class="muted">Temperaturverlauf, Taupunkt, Glaser und sommerlicher Wärmeschutz werden im Gefach (ohne Holz) gerechnet. Holz: Nadelholz, λ = 0,13 W/(m·K).</p>` },
   kuehlklassen: { t:"Kühlraum-Richtwerte", s:"Faustwert Wärmestrom q ≤ 8 W/m² → U_max = 8 / (θ_Umgebung − θ_Zelle).", l:`
     <p>Im Kühlraumbau wird die Dämmdicke oft über den zulässigen Wärmestrom festgelegt. Ein gängiger Praxiswert ist <b>q ≤ 8 W/m²</b>:</p>
     <p>U<sub>max</sub> = 8 W/m² / (θ<sub>Umgebung</sub> − θ<sub>Zelle</sub>)</p>
@@ -683,6 +839,11 @@ const info = k => `<i class="info" data-help="${k}">i</i>`;
 function ps(T) { return T >= 0 ? 610.5 * Math.exp(17.269 * T / (237.3 + T)) : 610.5 * Math.exp(21.875 * T / (265.5 + T)); }
 function dewFromP(p) { const a = Math.log(p / 610.5); return p >= 610.5 ? 237.3 * a / (17.269 - a) : 265.5 * a / (21.875 - a); }
 const DELTA0 = 2.0e-10; // Dampfleitkoeffizient Luft [kg/(m·s·Pa)]
+const LAMBDA_WOOD = 0.13; // Nadelholz für Sparren/Balken/Ständer [W/(m·K)]
+let CALC = {};            // Zwischenergebnisse für Rechenweg, Vergleich und Export
+let CLIM = null, GL = null, SUM = null;
+let READY = false;        // erst nach dem Start die Adresszeile aktualisieren
+let VAR_A = null;         // gemerkte Variante A für den Vergleich
 
 document.addEventListener("mouseup", () => { if (!dragRow) [...layers.rows].forEach(r => r.draggable = false); });
 
@@ -759,7 +920,7 @@ function setMat(tr, name) {
 }
 
 // ================= Schichten =================
-function addLayer(name = "Mineralwolle WLS 035", d = 10) {
+function addLayer(name = "Mineralwolle WLS 035", d = 10, w = 0) {
   const tr = document.createElement("tr");
   tr.innerHTML = `
     <td style="white-space:nowrap"><span class="grip" title="Ziehen zum Verschieben">⠿</span><span class="idx"></span></td>
@@ -767,6 +928,7 @@ function addLayer(name = "Mineralwolle WLS 035", d = 10) {
     <td class="num"><input class="small lam" type="number" step="any" min="0.001" data-help="lambda"></td>
     <td class="num"><input class="small mu" type="number" step="any" min="0" data-help="mu"></td>
     <td class="num"><input class="small d" type="number" step="any" min="0" value="${d}" data-help="d"></td>
+    <td class="num"><input class="small wood" type="number" step="1" min="0" max="90" value="${w || ""}" placeholder="0" data-help="holz"></td>
     <td class="num r">–</td>
     <td class="num sd">–</td>
     <td class="acts"><button class="mv up" title="Nach innen verschieben">▲</button> <button class="mv down" title="Nach außen verschieben">▼</button> <button class="x" title="Entfernen">✕</button></td>`;
@@ -803,13 +965,41 @@ function readLayers() {
     const mu = Math.max(0, parseFloat(tr.querySelector(".mu").value) || 0);
     const d = Math.max(0, parseFloat(tr.querySelector(".d").value) || 0);
     const air = MAT[name].air;
-    return { tr, name, c: MAT[name].c, l, mu, d, R: air ? air * airR(d) : l > 0 ? d / 100 / l : 0, sd: mu * d / 100 };
+    const R = air ? air * airR(d) : l > 0 ? d / 100 / l : 0;
+    // Holzanteil (Sparren/Balken/Ständer) in dieser Schicht → inhomogene Schicht
+    const f = Math.min(0.9, Math.max(0, (parseFloat(tr.querySelector(".wood").value) || 0) / 100));
+    const Rw = d / 100 / LAMBDA_WOOD;
+    const Req = f > 0 ? 1 / ((1 - f) / Math.max(R, 1e-9) + f / Math.max(Rw, 1e-9)) : R;
+    return { tr, name, c: MAT[name].c, l, mu, d, R, f, Rw, Req, sd: mu * d / 100 };
   });
+}
+
+// Inhomogene Bauteile nach DIN EN ISO 6946: oberer (R'T) und unterer (R''T) Grenzwert, RT = Mittelwert
+function inhomogeneous(L, rsi, rse) {
+  const inh = L.filter(l => l.f > 0 && l.d > 0).slice(0, 6);
+  if (!inh.length) return null;
+  let sumG = 0;
+  const sections = [];
+  for (let m = 0; m < (1 << inh.length); m++) {      // alle Kombinationen Gefach/Holz der inhomogenen Schichten
+    let fa = 1, R = rsi + rse;
+    L.forEach(l => {
+      const j = inh.indexOf(l);
+      if (j < 0) { R += l.R; return; }
+      const wood = (m >> j) & 1;
+      fa *= wood ? l.f : 1 - l.f;
+      R += wood ? l.Rw : l.R;
+    });
+    if (fa > 0) { sumG += fa / R; sections.push({ fa, R, wood: inh.map((_, j) => (m >> j) & 1) }); }
+  }
+  const rUp = 1 / sumG;
+  const rLo = rsi + rse + L.reduce((a, l) => a + (inh.includes(l) ? l.Req : l.R), 0);
+  const rt = (rUp + rLo) / 2;
+  return { rUp, rLo, rt, e: (rUp - rLo) / (2 * rt), sections, inh };
 }
 
 function loadPreset() {
   layers.innerHTML = "";
-  BT()[$("bauteil").value].preset.forEach(([n, d]) => addLayer(n, d));
+  BT()[$("bauteil").value].preset.forEach(([n, d, w]) => addLayer(n, d, w));
   calc();
 }
 function setBauteil() {
@@ -847,16 +1037,24 @@ function calc() {
     x.tr.querySelector(".idx").textContent = i + 1;
     x.tr.querySelector(".up").disabled = i === 0;
     x.tr.querySelector(".down").disabled = i === L.length - 1;
-    x.tr.querySelector(".r").textContent = fmt(x.R);
+    x.tr.querySelector(".r").innerHTML = fmt(x.R) + (x.f > 0 ? `<span class="rw" title="flächengewichtet mit Holz">mit Holz ${fmt(x.Req)}</span>` : "");
     x.tr.querySelector(".sd").textContent = fmtSd(x.sd);
   });
   const sumR = L.reduce((a, x) => a + x.R, 0), sumD = L.reduce((a, x) => a + x.d, 0), sumSd = L.reduce((a, x) => a + x.sd, 0);
-  const rt = rsi + sumR + rse;
+  const rtG = rsi + sumR + rse;                 // nur Gefach (ohne Holz)
+  const uG = rtG > 0 ? 1 / rtG : 0;
+  const inh = inhomogeneous(L, rsi, rse);       // null, wenn keine Schicht einen Holzanteil hat
+  const rt = inh ? inh.rt : rtG;
   const u = rt > 0 ? 1 / rt : 0;
   $("u").innerHTML = rt > 0 ? `${fmt(u)} <small>W/(m²K)</small>` : "–";
   $("rt").textContent = fmt(rt);
   $("dt").textContent = fmt(sumD, 1);
   $("sdt").textContent = fmtSd(sumSd);
+  $("inhom").innerHTML = inh
+    ? `<div class="kv" style="margin-top:6px">🪵 Holzanteil berücksichtigt (DIN EN ISO 6946): R'<sub>T</sub> = <b>${fmt(inh.rUp)}</b> · R''<sub>T</sub> = <b>${fmt(inh.rLo)}</b> · Fehler e = <b>${fmt(inh.e * 100, 1)} %</b> ${info("holz")}</div>
+       <div class="kv">Nur Gefach (ohne Holz) wäre U = <b>${fmt(uG)}</b> – das Holz verschlechtert den U-Wert um <b>${fmt((u / uG - 1) * 100, 0)} %</b>.</div>`
+    : "";
+  CALC = { L, rsi, rse, sumR, rtG, uG, inh, rt, u, sumSd };
 
   const M = MODES[mode];
   if (mode === "haus") {
@@ -888,14 +1086,18 @@ function calc() {
 
   renderStandards(u, rt, L);
   markDrawing();
-  climate(L, rsi, rse, rt, u);
+  climate(L, rsi, rse, rtG, uG);   // Temperaturen, Taupunkt, Glaser: im Gefach (ohne Holz)
+  summer(L, rsi, rse, uG);
+  renderRechenweg();
+  renderCompare();
+  if (READY) history.replaceState(null, "", "#" + encodeState());   // Adresszeile = aktueller Aufbau
 }
 
 function climate(L, rsi, rse, rt, u) {
   const M = MODES[mode];
   const ti = num("ti"), te = num("te");
   const phi = Math.min(100, Math.max(1, num("phi") || 50)), phe = Math.min(100, Math.max(1, num("phe") || 80));
-  if (isNaN(ti) || isNaN(te) || rt <= 0 || !L.length) { $("chart").innerHTML = ""; $("gchart").innerHTML = ""; $("glres").innerHTML = ""; $("dewmsg").innerHTML = ""; return; }
+  if (isNaN(ti) || isNaN(te) || rt <= 0 || !L.length) { CLIM = null; GL = null; $("chart").innerHTML = ""; $("gchart").innerHTML = ""; $("glres").innerHTML = ""; $("dewmsg").innerHTML = ""; return; }
 
   const q = u * (ti - te);
   // Temperatur, Lage (cm) und kumuliertes sd an allen Schichtgrenzen
@@ -928,16 +1130,21 @@ function climate(L, rsi, rse, rt, u) {
   if (tWarmSurf < td) msg += `<span class="badge bad">✗ Tauwasser an der Oberfläche (${warmName}): ${fmt(tWarmSurf,1)} °C < θs ${fmt(td,1)} °C</span>${info(warmIn ? "tsi" : "tse")} `;
   else if (plane) msg += `<span class="badge na">Taupunktebene bei ca. ${fmt(plane.x,1)} cm von innen – in „${plane.layer}“</span>${info("dewplane")} `;
   else msg += `<span class="badge ok">✓ Temperatur bleibt im gesamten Bauteil über dem Taupunkt</span> `;
+  // Schimmel-Check nach DIN 4108-2: mit Rsi = 0,25 (Raumecken, hinter Möbeln)
+  let mold = null;
   if (mode === "haus" && ti > te) {
-    const frsi = (tsi - te) / (ti - te);
+    const rt25 = rt - rsi + 0.25, frsi = 1 - 0.25 / rt25, tsi25 = te + frsi * (ti - te);
+    mold = { rt25, frsi, tsi25 };
     msg += frsi >= 0.7
-      ? `<span class="badge ok">✓ Schimmelkriterium f<sub>Rsi</sub> = ${fmt(frsi,2)} ≥ 0,70</span>`
-      : `<span class="badge bad">✗ Schimmelgefahr: f<sub>Rsi</sub> = ${fmt(frsi,2)} < 0,70</span>`;
+      ? `<span class="badge ok">✓ Schimmel-Check (R<sub>si</sub> = 0,25): f<sub>Rsi</sub> = ${fmt(frsi,2)} ≥ 0,70 · θ<sub>si</sub> = ${fmt(tsi25,1)} °C</span>`
+      : `<span class="badge bad">✗ Schimmelgefahr (R<sub>si</sub> = 0,25): f<sub>Rsi</sub> = ${fmt(frsi,2)} < 0,70 · θ<sub>si</sub> = ${fmt(tsi25,1)} °C</span>`;
     msg += info("frsi");
   }
+  if (L.some(l => l.f > 0)) msg += `<br><span class="badge na">🪵 Temperaturverlauf, Taupunkt und Glaser gelten für das Gefach (ohne Holz)</span>${info("holz")}`;
   if (!warmIn) msg += `<br><span class="badge warn">Warme Seite ist ${mode === "kuehl" ? "die Umgebung (außen)" : "außen"} → Dampfsperre gehört auf die warme Außenseite</span>${info("mode")}`;
   $("dewmsg").innerHTML = msg;
 
+  CLIM = { ti, te, phi, phe, q, pts, tsi, tse, pi, pe, td, warmIn, plane, mold };
   drawChart(pts, L, ti, te, td, plane);
   glaser(pts, L, pi, pe);
 }
@@ -946,7 +1153,7 @@ function climate(L, rsi, rse, rt, u) {
 function glaser(pts, L, pi, pe) {
   const S = pts[pts.length - 1].sd;
   const hours = Math.max(0, num("days") || 0) * 24;
-  if (S <= 0) { $("glres").innerHTML = `<span class="badge na">s<sub>d</sub> gesamt = 0 – kein Glaser-Nachweis möglich (μ-Werte fehlen)</span>`; $("gchart").innerHTML = ""; return; }
+  if (S <= 0) { GL = null; $("glres").innerHTML = `<span class="badge na">s<sub>d</sub> gesamt = 0 – kein Glaser-Nachweis möglich (μ-Werte fehlen)</span>`; $("gchart").innerHTML = ""; return; }
 
   const P = pts.map((p, k) => ({ x:p.sd, y:ps(p.t), k }));
   const A = { x:0, y:Math.min(pi, P[0].y) }, B = { x:S, y:Math.min(pe, P[P.length - 1].y) };
@@ -974,6 +1181,7 @@ function glaser(pts, L, pi, pe) {
     if (mass > 1e-6) planes.push({ k:h.k, sd:h.x, mass, x:pts[h.k].x, a:L[h.k - 1].name, b:L[h.k].name });
   }
   const MT = planes.reduce((a, p) => a + p.mass, 0);
+  let MV = null;
 
   let h = "";
   if (!planes.length) {
@@ -986,7 +1194,7 @@ function glaser(pts, L, pi, pe) {
     if (mode === "haus") {
       const psV = ps(12), pV = 0.7 * psV;
       const sa = planes[0].sd, sb = planes[planes.length - 1].sd;
-      const MV = DELTA0 * ((psV - pV) / Math.max(sa, 1e-3) + (psV - pV) / Math.max(S - sb, 1e-3)) * 90 * 24 * 3600;
+      MV = DELTA0 * ((psV - pV) / Math.max(sa, 1e-3) + (psV - pV) / Math.max(S - sb, 1e-3)) * 90 * 24 * 3600;
       h += `<div class="kv">Verdunstungsmenge M<sub>V</sub> ≈ <b>${fmt(MV,3)} kg/m²</b> (vereinfacht) ${info("mv")}</div><div style="margin-top:6px">`;
       h += MT <= 1.0 ? `<span class="badge ok">✓ M<sub>T</sub> ≤ 1,0 kg/m²</span>` : `<span class="badge bad">✗ M<sub>T</sub> > 1,0 kg/m²</span>`;
       h += MT <= 0.5 ? "" : `<span class="badge warn">an nicht saugenden Schichten max. 0,5 kg/m²</span>`;
@@ -999,7 +1207,156 @@ function glaser(pts, L, pi, pe) {
     }
   }
   $("glres").innerHTML = h;
+  GL = { S, planes, MT, MV, hours };
   drawGlaser(pts, L, hull, A, B, planes);
+}
+
+// ================= Sommerlicher Wärmeschutz (Matrixverfahren DIN EN ISO 13786) =================
+const cx = (re, im = 0) => ({ re, im });
+const cmul = (a, b) => cx(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
+const cadd = (a, b) => cx(a.re + b.re, a.im + b.im);
+const cabs = a => Math.hypot(a.re, a.im);
+const carg = a => Math.atan2(a.im, a.re);
+const mmul = (A, B) => [
+  [cadd(cmul(A[0][0], B[0][0]), cmul(A[0][1], B[1][0])), cadd(cmul(A[0][0], B[0][1]), cmul(A[0][1], B[1][1]))],
+  [cadd(cmul(A[1][0], B[0][0]), cmul(A[1][1], B[1][0])), cadd(cmul(A[1][0], B[0][1]), cmul(A[1][1], B[1][1]))]];
+const resM = R => [[cx(1), cx(-R)], [cx(0), cx(1)]];   // reiner Widerstand (Übergang, Luftschicht)
+const hhmm = h => { const m = Math.round(h * 60) % 1440; return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`; };
+
+function summer(L, rsi, rse, uG) {
+  const card = $("sumCard");
+  // nur für Bauteile, die von der Sonne aufgeheizt werden (nicht Innenwand, Kellerdecke, Bodenplatte, Kühlzelle)
+  const cat = BT()[$("bauteil").value].cat;
+  if (mode !== "haus" || ["innen", "keller", "boden"].includes(cat) || !L.length || !(uG > 0)) { card.hidden = true; SUM = null; return; }
+  card.hidden = false;
+  const T = 86400;                    // Periode 24 h in s
+  let M = resM(rsi);                  // Innenluft → Innenoberfläche
+  const layersInfo = [];
+  L.forEach(l => {
+    if (l.d <= 0) return;
+    if (MAT[l.name].air || !(l.l > 0)) { M = mmul(resM(l.R), M); return; }
+    const [rho, cap] = PHYS[l.name] || [1000, 1000];
+    const d = l.d / 100, delta = Math.sqrt(l.l * T / (Math.PI * rho * cap)), xi = d / delta;   // periodische Eindringtiefe
+    const ch = cx(Math.cosh(xi) * Math.cos(xi), Math.sinh(xi) * Math.sin(xi));   // cosh(ξ(1+i))
+    const sh = cx(Math.sinh(xi) * Math.cos(xi), Math.cosh(xi) * Math.sin(xi));   // sinh(ξ(1+i))
+    const Z = [[ch, cmul(cx(-delta / (2 * l.l), delta / (2 * l.l)), sh)],       // −δ/(λ(1+i))·sinh
+               [cmul(cx(-l.l / delta, -l.l / delta), sh), ch]];                 // −λ(1+i)/δ·sinh
+    M = mmul(Z, M);
+    layersInfo.push({ name: l.name, delta, xi, rho, cap });
+  });
+  const m12 = M[0][1], m12abs = cabs(m12);
+  const tav = rsi / m12abs;                                        // Amplitude innen / außen (Innenluft konstant)
+  const TP = 2 * Math.PI;
+  const eta = (((carg(m12) - Math.PI) % TP) + TP) % TP / TP * 24;  // zeitliche Verzögerung in h
+  const full = mmul(resM(rse), M);                                 // Luft → Luft
+  const fdec = 1 / (uG * cabs(full[0][1]));                        // Abminderungsfaktor |Y12| / U
+  const tshift = (((carg(full[0][1]) - Math.PI) % TP) + TP) % TP / TP * 24;   // Zeitverschiebung Luft → Luft (ISO 13786)
+  SUM = { tav, eta, fdec, tshift, m12abs, layers: layersInfo };
+  $("tshift").textContent = fmt(tshift, 1);
+
+  $("eta").textContent = fmt(eta, 1);
+  $("tav").textContent = fmt(tav, 3);
+  $("damp").textContent = fmt(1 / tav, 0);
+  $("fdec").textContent = fmt(fdec, 2);
+  let m = eta >= 10 ? `<span class="badge ok">✓ Phasenverschiebung ≥ 10 h – die Hitze kommt erst nachts innen an</span>`
+        : eta >= 8 ? `<span class="badge warn">Phasenverschiebung 8–10 h – mittel</span>`
+        : `<span class="badge warn">Phasenverschiebung &lt; 8 h – die Hitze kommt schon am Abend innen an</span>`;
+  m += 1 / tav >= 20 ? `<span class="badge ok">✓ Amplitudendämpfung ≥ 20</span>` : `<span class="badge warn">Amplitudendämpfung &lt; 20</span>`;
+  if (L.some(l => l.f > 0)) m += `<span class="badge na">🪵 gerechnet im Gefach (ohne Holz)</span>`;
+  $("summsg").innerHTML = m + info("sommer");
+  drawSummer(tav, eta);
+}
+
+function drawSummer(tav, eta) {
+  const svg = $("schart"), W = chartWidth(svg), H = 210, nar = W < 520;
+  const Lm = nar ? 38 : 48, Rm = 14, T = 14, B = 30, A = 10;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const X = h => Lm + h / 24 * (W - Lm - Rm);
+  const Y = v => T + (1 - (v + 12) / 24) * (H - T - B);
+  let s = "";
+  [-10, 0, 10].forEach(v => s += `<line x1="${Lm}" x2="${W - Rm}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e3e6eb"/><text x="${Lm - 6}" y="${Y(v) + 4}" font-size="11" fill="#6b7280" text-anchor="end">${v > 0 ? "+" : ""}${v} K</text>`);
+  for (let h = 0; h <= 24; h += 6) s += `<text x="${X(h)}" y="${H - 10}" font-size="11" fill="#6b7280" text-anchor="middle">${h}:00</text>`;
+  const curve = (amp, peak) => { const p = []; for (let i = 0; i <= 96; i++) { const h = i / 4; p.push(`${X(h)},${Y(amp * Math.cos(2 * Math.PI * (h - peak) / 24))}`); } return p.join(" "); };
+  const pe = 14, pi = (14 + eta) % 24;
+  s += `<polyline points="${curve(A, pe)}" fill="none" stroke="#dc2626" stroke-width="2.5"/>`;
+  s += `<polyline points="${curve(A * tav, pi)}" fill="none" stroke="#2563eb" stroke-width="2.5"/>`;
+  const mark = (h, y, col, txt) => { const x = X(h), end = x > W * 0.62;
+    return `<line x1="${x}" x2="${x}" y1="${T}" y2="${H - B}" stroke="${col}" stroke-dasharray="4 4"/>` +
+           `<text x="${end ? x - 4 : x + 4}" y="${y}" font-size="11" fill="${col}" text-anchor="${end ? "end" : "start"}">${txt}</text>`; };
+  s += mark(pe, T + 10, "#dc2626", `max. außen ${hhmm(pe)}`);
+  s += mark(pi, H - B - 8, "#2563eb", `max. innen ${hhmm(pi)} (±${fmt(A * tav, 2)} K)`);
+  svg.innerHTML = s;
+}
+
+// ================= Rechenweg =================
+function renderRechenweg() {
+  const C = CALC, c = CLIM, g = GL, s = SUM;
+  if (!C.L) return;
+  const f1 = x => fmt(x, 1), f2 = x => fmt(x, 2), f3 = x => fmt(x, 3);
+  const fx = (x, n = 4) => Number.isFinite(x) ? x.toLocaleString("de-DE", { maximumFractionDigits:n }) : "–";
+  const br = x => x < 0 ? `(${f1(x)})` : f1(x);
+  const F = t => `<div class="rw-f">${t}</div>`;
+  const step = (t, b) => `<div class="rw-step"><h4>${t}</h4>${b}</div>`;
+  const Ls = C.L.filter(l => l.d > 0);
+  let n = 1, h = "";
+
+  h += step(`${n++}. Wärmedurchlasswiderstand jeder Schicht: R = d / λ`, Ls.map(l => F(`${l.name}: ` + (MAT[l.name].air
+    ? `Luftschicht d = ${fx(l.d, 2)} cm → R = <b>${f3(l.R)}</b> m²K/W (Tabellenwert DIN EN ISO 6946${MAT[l.name].air < 1 ? ", × 0,5 schwach belüftet" : ""})`
+    : `R = ${fx(l.d / 100)} m / ${fx(l.l, 3)} W/(mK) = <b>${f3(l.R)}</b> m²K/W`))).join(""));
+
+  h += step(`${n++}. Wärmedurchgangswiderstand${C.inh ? " im Gefach (ohne Holz)" : ""}: R<sub>T</sub> = R<sub>si</sub> + ΣR + R<sub>se</sub>`,
+    F(`R<sub>T</sub> = ${f2(C.rsi)} + (${Ls.map(l => f3(l.R)).join(" + ")}) + ${f2(C.rse)} = <b>${f3(C.rtG)}</b> m²K/W`));
+
+  if (C.inh) {
+    const I = C.inh;
+    let b = I.inh.map(l => F(`${l.name}: Holzanteil f = ${fx(l.f * 100, 1)} % → R<sub>Holz</sub> = ${fx(l.d / 100)} m / 0,13 W/(mK) = ${f3(l.Rw)} m²K/W`)).join("");
+    b += I.sections.map(sec => F(`Abschnitt ${sec.wood.map(w => w ? "Holz" : "Gefach").join(" / ")} (Flächenanteil ${fx(sec.fa * 100, 1)} %): R<sub>T,j</sub> = ${f3(sec.R)} m²K/W`)).join("");
+    b += F(`Oberer Grenzwert: 1/R'<sub>T</sub> = Σ f<sub>j</sub>/R<sub>T,j</sub> = ${I.sections.map(sec => `${fx(sec.fa, 3)}/${f3(sec.R)}`).join(" + ")} → R'<sub>T</sub> = <b>${f3(I.rUp)}</b> m²K/W`);
+    b += I.inh.map(l => F(`${l.name}: R'' = 1 / (${fx(1 - l.f, 3)}/${f3(l.R)} + ${fx(l.f, 3)}/${f3(l.Rw)}) = ${f3(l.Req)} m²K/W`)).join("");
+    b += F(`Unterer Grenzwert: R''<sub>T</sub> = ${f2(C.rsi)} + ${Ls.map(l => f3(I.inh.includes(l) ? l.Req : l.R)).join(" + ")} + ${f2(C.rse)} = <b>${f3(I.rLo)}</b> m²K/W`);
+    b += F(`R<sub>T</sub> = (${f3(I.rUp)} + ${f3(I.rLo)}) / 2 = <b>${f3(I.rt)}</b> m²K/W · Fehler e = (${f3(I.rUp)} − ${f3(I.rLo)}) / (2 · ${f3(I.rt)}) = ${fx(I.e * 100, 1)} %`);
+    h += step(`${n++}. Holzanteil – inhomogenes Bauteil (DIN EN ISO 6946)`, b);
+  }
+
+  h += step(`${n++}. U-Wert: U = 1 / R<sub>T</sub>`, F(`U = 1 / ${f3(C.rt)} = <b>${f3(C.u)}</b> W/(m²K)`));
+
+  if (c) {
+    const tl = c.pts.map((p, i) => i === 0
+      ? `θ<sub>si</sub> = θ<sub>i</sub> − q · R<sub>si</sub> = ${f1(c.ti)} − ${f2(c.q)} · ${f2(C.rsi)} = <b>${f1(p.t)} °C</b>`
+      : `θ<sub>${i}</sub> = ${f1(c.pts[i - 1].t)} − ${f2(c.q)} · ${f3(C.L[i - 1].R)} = <b>${f1(p.t)} °C</b> (nach „${C.L[i - 1].name}“)`);
+    h += step(`${n++}. Temperaturverlauf${C.inh ? " (Gefach)" : ""}: q = U · (θ<sub>i</sub> − θ<sub>e</sub>), je Schicht fällt die Temperatur um q · R`,
+      F(`q = ${f3(C.uG)} · (${f1(c.ti)} − ${br(c.te)}) = <b>${f2(c.q)}</b> W/m²`) + tl.map(F).join(""));
+
+    const tw = c.warmIn ? c.ti : c.te, phw = c.warmIn ? c.phi : c.phe, pw = c.warmIn ? c.pi : c.pe, a = Math.log(pw / 610.5);
+    const k = pw >= 610.5 ? ["237,3", "17,269"] : ["265,5", "21,875"];
+    const psw = ps(tw);
+    h += step(`${n++}. Taupunkt der warmen Seite (Magnus-Formel, DIN 4108-3)`,
+      F(`p<sub>s</sub>(${f1(tw)} °C) = 610,5 · e<sup>${tw >= 0 ? "17,269·θ/(237,3+θ)" : "21,875·θ/(265,5+θ)"}</sup> = ${fmt(psw, 0)} Pa`) +
+      F(`p = φ · p<sub>s</sub> = ${fx(phw / 100, 2)} · ${fmt(psw, 0)} = ${fmt(pw, 0)} Pa`) +
+      F(`θ<sub>s</sub> = ${k[0]} · ln(p/610,5) / (${k[1]} − ln(p/610,5)) = ${k[0]} · ${fx(a)} / (${k[1]} − ${fx(a)}) = <b>${f1(c.td)} °C</b>`));
+
+    if (c.mold) h += step(`${n++}. Schimmel-Check nach DIN 4108-2 (R<sub>si</sub> = 0,25)`,
+      F(`R<sub>T</sub>' = R<sub>T</sub> − R<sub>si</sub> + 0,25 = ${f3(C.rtG)} − ${f2(C.rsi)} + 0,25 = ${f3(c.mold.rt25)} m²K/W`) +
+      F(`f<sub>Rsi</sub> = 1 − 0,25 / R<sub>T</sub>' = 1 − 0,25 / ${f3(c.mold.rt25)} = <b>${fx(c.mold.frsi, 3)}</b> (Anforderung ≥ 0,70)`) +
+      F(`θ<sub>si</sub> = θ<sub>e</sub> + f<sub>Rsi</sub> · (θ<sub>i</sub> − θ<sub>e</sub>) = ${f1(c.te)} + ${fx(c.mold.frsi, 3)} · ${f1(c.ti - c.te)} = <b>${f1(c.mold.tsi25)} °C</b>`));
+
+    if (g) h += step(`${n++}. Glaser: s<sub>d</sub> = μ · d und Dampfdrücke`,
+      Ls.map(l => F(`${l.name}: s<sub>d</sub> = ${fx(l.mu, 0)} · ${fx(l.d / 100)} m = ${fmtSd(l.sd)} m`)).join("") +
+      F(`Σ s<sub>d</sub> = ${fmtSd(g.S)} m · p<sub>i</sub> = ${fmt(c.pi, 0)} Pa · p<sub>e</sub> = ${fmt(c.pe, 0)} Pa`) +
+      (g.planes.length
+        ? g.planes.map(p => F(`Tauwasser zwischen „${p.a}“ und „${p.b}“: g = δ<sub>0</sub> · (Δp<sub>zu</sub>/s<sub>d,zu</sub> − Δp<sub>ab</sub>/s<sub>d,ab</sub>) · t = <b>${fmt(p.mass * 1000, 0)} g/m²</b>`)).join("") +
+          F(`M<sub>T</sub> = <b>${fmt(g.MT, 3)} kg/m²</b>${g.MV != null ? ` · M<sub>V</sub> = ${fmt(g.MV, 3)} kg/m²` : ""}`)
+        : F(`Die Gerade von p<sub>i</sub> nach p<sub>e</sub> bleibt überall unter p<sub>s</sub> → kein Tauwasser.`)));
+  }
+
+  if (s) h += step(`${n++}. Sommerlicher Wärmeschutz (DIN EN ISO 13786, Periode T = 24 h)`,
+    s.layers.map(x => F(`${x.name}: δ = √(λ·T / (π·ρ·c)) = ${fx(x.delta * 100, 1)} cm (ρ = ${fx(x.rho, 0)} kg/m³, c = ${fx(x.cap, 0)} J/(kgK)) → ξ = d/δ = ${fx(x.xi, 3)}`)).join("") +
+    F(`Matrix Innenluft → Außenoberfläche: M = Z<sub>n</sub> · … · Z<sub>1</sub> · Z<sub>si</sub> → |M<sub>12</sub>| = ${f3(s.m12abs)} m²K/W`) +
+    F(`TAV = R<sub>si</sub> / |M<sub>12</sub>| = ${f2(C.rsi)} / ${f3(s.m12abs)} = <b>${fx(s.tav, 3)}</b> → Dämpfung 1/TAV = ${fmt(1 / s.tav, 0)}`) +
+    F(`Phasenverschiebung η = (arg M<sub>12</sub> − π) · 24 h / 2π = <b>${f1(s.eta)} h</b>`) +
+    F(`Luft → Luft (DIN EN ISO 13786): Abminderungsfaktor f = 1 / (U · |Z<sub>12</sub>|) = ${f2(s.fdec)} · Zeitverschiebung Δt = <b>${f1(s.tshift)} h</b>`));
+
+  $("rw").innerHTML = h;
 }
 
 // ================= Diagramme =================
@@ -1248,6 +1605,132 @@ $("drawing").addEventListener("click", e => {
   showHelp("drawing");
 });
 
+// ================= Kurzer Teilen-Link =================
+// Format: modus_bauteil_schichten_rsi_rse_θi_φi_θe_φe_tage  (leere Felder = Standardwert)
+// Schicht: id~d·100~holz%~λ·10000~μ·10 (λ, μ nur wenn vom Standard abweichend), Schichten mit "." getrennt
+const mid = n => { let h = 5381; for (const ch of n) h = ((h * 33) ^ ch.codePointAt(0)) >>> 0; return (h % 46656).toString(36).padStart(3, "0"); };
+const MAT_BY_ID = {};
+Object.keys(MAT).forEach(n => { const id = mid(n); if (MAT_BY_ID[id]) console.warn("Baustoff-ID doppelt:", n, MAT_BY_ID[id]); MAT_BY_ID[id] = n; });
+
+function encodeState() {
+  const b = $("bauteil").value, bt = BT()[b], M = MODES[mode];
+  const i = (x, k) => Number.isFinite(x) ? String(Math.round(x * k)) : "";
+  const dv = (x, def, k) => Number.isFinite(x) && Math.round(x * k) !== Math.round(def * k) ? i(x, k) : "";
+  const lay = [...layers.rows].map(tr => {
+    const n = tr.dataset.mat, m = MAT[n];
+    const l = parseFloat(tr.querySelector(".lam").value), mu = parseFloat(tr.querySelector(".mu").value);
+    const d = parseFloat(tr.querySelector(".d").value) || 0, w = parseFloat(tr.querySelector(".wood").value) || 0;
+    const f = [mid(n), i(d, 100), w ? i(w, 1) : "",
+      m.air || (m.l !== null && Math.abs(l - m.l) < 1e-9) ? "" : i(l, 10000),
+      m.mu !== null && Math.abs(mu - m.mu) < 1e-9 ? "" : i(mu, 10)];
+    while (f.length > 2 && f[f.length - 1] === "") f.pop();
+    return f.join("~");
+  }).join(".");
+  const p = [mode === "kuehl" ? "k" : "h", mid(b), lay,
+    dv(num("rsi"), bt.rsi, 100), dv(num("rse"), bt.rse, 100),
+    dv(num("ti"), M.ti, 10), dv(num("phi"), M.phi, 1), dv(num("te"), M.te, 10), dv(num("phe"), M.phe, 1), dv(num("days"), M.days, 1)];
+  while (p.length > 3 && p[p.length - 1] === "") p.pop();
+  return p.join("_");
+}
+
+function applyState(code) {
+  try {
+    const p = code.split("_");
+    const m = p[0] === "k" ? "kuehl" : "haus";
+    const bName = Object.keys(MODES[m].bt).find(k => mid(k) === p[1]);
+    if (!bName) return false;
+    setMode(m);
+    $("bauteil").value = bName;
+    const bt = BT()[bName], M = MODES[m];
+    const val = (s, k, def) => s === undefined || s === "" ? def : parseInt(s, 10) / k;
+    $("rsi").value = val(p[3], 100, bt.rsi); $("rse").value = val(p[4], 100, bt.rse);
+    $("ti").value = val(p[5], 10, M.ti); $("phi").value = val(p[6], 1, M.phi);
+    $("te").value = val(p[7], 10, M.te); $("phe").value = val(p[8], 1, M.phe); $("days").value = val(p[9], 1, M.days);
+    layers.innerHTML = "";
+    (p[2] || "").split(".").filter(Boolean).forEach(ls => {
+      const f = ls.split("~"), name = MAT_BY_ID[f[0]];
+      if (!name) return;
+      addLayer(name, parseInt(f[1] || "0", 10) / 100, f[2] ? parseInt(f[2], 10) : 0);
+      const tr = layers.rows[layers.rows.length - 1];
+      if (f[3]) tr.querySelector(".lam").value = parseInt(f[3], 10) / 10000;
+      if (f[4]) tr.querySelector(".mu").value = parseInt(f[4], 10) / 10;
+    });
+    calc();
+    return true;
+  } catch (e) { console.warn("Link konnte nicht gelesen werden:", e); return false; }
+}
+
+let toastTimer;
+function toast(msg, url) {
+  const t = $("toast");
+  t.innerHTML = msg + (url ? `<input type="text" readonly value="${url}">` : "");
+  t.hidden = false;
+  if (url) { const inp = t.querySelector("input"); inp.addEventListener("focus", () => inp.select()); }
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, url ? 9000 : 4000);
+}
+$("shareBtn").addEventListener("click", async () => {
+  const url = location.href.split("#")[0] + "#" + encodeState();
+  history.replaceState(null, "", url);
+  let ok = false;
+  try { await navigator.clipboard.writeText(url); ok = true; } catch (e) { /* z. B. ohne HTTPS */ }
+  toast(ok ? `🔗 Link kopiert – ${url.length} Zeichen. Einfach an die Klasse schicken:` : "🔗 Link zum Kopieren:", url);
+});
+
+// ================= Variantenvergleich =================
+function snapshot() {
+  const C = CALC, c = CLIM, g = GL, s = SUM;
+  return { code: encodeState(), mode, bauteil: $("bauteil").value,
+    aufbau: C.L.filter(l => l.d > 0).map(l => `${l.name} ${l.d.toLocaleString("de-DE", { maximumFractionDigits:2 })} cm${l.f > 0 ? ` (${fmt(l.f * 100, 0)} % Holz)` : ""}`),
+    d: C.L.reduce((a, l) => a + l.d, 0), u: C.u, rt: C.rt,
+    niveau: $("mbN").textContent.replace("Niveau: ", "") || "–", geg: $("mbS").textContent || "–",
+    mt: g ? g.MT : null, frsi: c && c.mold ? c.mold.frsi : null, eta: s ? s.eta : null, tav: s ? s.tav : null };
+}
+function renderCompare() {
+  const card = $("cmpCard");
+  if (!VAR_A) { card.hidden = true; return; }
+  card.hidden = false;
+  const A = VAR_A, B = snapshot();
+  // better: -1 = kleiner ist besser, +1 = größer ist besser, 0 = neutral
+  const num3 = (label, a, b, n, unit, better) => {
+    const ok = a != null && b != null && Number.isFinite(a) && Number.isFinite(b);
+    const cmp = ok && better && Math.abs(a - b) > 1e-9 ? Math.sign(b - a) * better : 0;
+    const d = ok ? b - a : null;
+    return `<tr><th>${label}</th><td class="${cmp < 0 ? "better" : ""}">${a == null ? "–" : fmt(a, n) + unit}</td><td class="${cmp > 0 ? "better" : ""}">${b == null ? "–" : fmt(b, n) + unit}</td>
+            <td class="diff">${d == null || Math.abs(d) < 1e-9 ? "" : (d > 0 ? "+" : "") + fmt(d, n) + unit}</td></tr>`;
+  };
+  const txt = (label, a, b) => `<tr><th>${label}</th><td>${a}</td><td>${b}</td><td class="diff"></td></tr>`;
+  $("cmpTable").innerHTML =
+    `<tr><th></th><th>Variante A (gemerkt)</th><th>Variante B (aktuell)</th><th class="diff">Differenz B − A</th></tr>` +
+    txt("Bauteil", A.bauteil, B.bauteil) +
+    txt("Aufbau (innen → außen)", A.aufbau.join("<br>"), B.aufbau.join("<br>")) +
+    num3("Dicke gesamt", A.d, B.d, 1, " cm", 0) +
+    num3("U-Wert", A.u, B.u, 3, " W/(m²K)", -1) +
+    num3("R<sub>T</sub>", A.rt, B.rt, 3, " m²K/W", 1) +
+    txt("Niveau", A.niveau, B.niveau) +
+    txt(mode === "kuehl" ? "Wärmestrom" : "GEG", A.geg, B.geg) +
+    num3("Tauwasser M<sub>T</sub>", A.mt, B.mt, 3, " kg/m²", -1) +
+    num3("f<sub>Rsi</sub> (Schimmel)", A.frsi, B.frsi, 2, "", 1) +
+    num3("Phasenverschiebung", A.eta, B.eta, 1, " h", 1) +
+    num3("TAV", A.tav, B.tav, 3, "", -1);
+}
+$("cmpBtn").addEventListener("click", () => {
+  VAR_A = snapshot(); renderCompare();
+  $("cmpCard").scrollIntoView({ behavior:"smooth", block:"start" });
+  toast("⚖️ Variante A gemerkt – ändere jetzt den Aufbau (z. B. anderer Dämmstoff), der Vergleich aktualisiert sich sofort.");
+});
+$("cmpSetA").addEventListener("click", () => { VAR_A = snapshot(); renderCompare(); toast("📌 Aktueller Stand ist jetzt Variante A."); });
+$("cmpSwap").addEventListener("click", () => { const cur = snapshot(); applyState(VAR_A.code); VAR_A = cur; renderCompare(); });
+$("cmpClose").addEventListener("click", () => { VAR_A = null; renderCompare(); });
+
+// ================= PDF / Drucken =================
+let rwWasOpen = false;
+addEventListener("beforeprint", () => {
+  rwWasOpen = $("rwBox").open; $("rwBox").open = true;
+  $("printHead").textContent = `U-Wert-Rechner · ${$("bauteil").value} · Ausdruck vom ${new Date().toLocaleDateString("de-DE")} · ${location.href}`;
+});
+addEventListener("afterprint", () => { $("rwBox").open = rwWasOpen; });
+$("printBtn").addEventListener("click", () => window.print());
+
 // ================= Hilfe (Tooltip + Seitenleiste) =================
 const tip = $("tip");
 // Diagrammbreite = verfügbare Breite (Text bleibt auf dem Handy lesbar)
@@ -1293,7 +1776,10 @@ $("preset").addEventListener("click", loadPreset);
 $("add").addEventListener("click", () => { addLayer(); calc(); });
 $("dinKlima").addEventListener("click", () => { setClimate(); calc(); });
 showHelp("start");
-setMode("haus");
+// Aufbau aus dem Link (#…) laden, sonst Standard
+if (!(location.hash.length > 3 && applyState(decodeURIComponent(location.hash.slice(1))))) setMode("haus");
+READY = true;
+calc();
 </script>
 </body>
 </html>
