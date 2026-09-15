@@ -8,6 +8,7 @@ Webbasierter Rechner für Lernzwecke (Techniker-Schule): U-Wert, Temperaturverla
 
 - Schichtaufbau mit Suche, farbigen Kategorien, λ- und μ-Werten, Verschieben per Drag & Drop
 - U-Wert nach DIN EN ISO 6946 – Luftschichten nach Tabellenwerten, **Holzanteil** (Sparren/Ständer) als inhomogenes Bauteil (oberer/unterer Grenzwert)
+- **Misch-U-Wert** für Holzbalkendecken, Sparren und Ständer: Schnittzeichnung mit Wärmestrom-Pfeilen, Excel-Tabelle Gefach/Holz (U<sub>m</sub> = Σ f · U) und Vergleich mit DIN EN ISO 6946
 - **Rechenweg** als farbige Tabellen wie in Excel (Wärmeschutz, Holzanteil, Glaser, Sommer, Ergebnisse) mit allen eingesetzten Zahlen
 - Bauteil-Auswahl nach Kategorie sortiert, innerhalb **von schlecht nach gut** mit Ampel (🔴 🟠 🟡 🟢)
 - Temperaturverlauf, Taupunkt, Schimmel-Check nach DIN 4108-2 (R<sub>si</sub> = 0,25)

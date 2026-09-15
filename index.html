@@ -24,7 +24,7 @@
   table.lay th, table.lay td { padding:6px 5px; border-bottom:1px solid var(--line); text-align:left; }
   th { font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.02em; white-space:nowrap; }
   td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
-  td input.small { width:100%; min-width:0; text-align:right; }   /* füllt die Spalte, statt sie aufzudrücken */
+  td input.small { width:100%; min-width:0; text-align:right; padding-left:4px; padding-right:4px; }   /* füllt die Spalte, statt sie aufzudrücken */
   td .rw { display:block; font-size:11px; color:#8b5a2b; }
   button { font:inherit; cursor:pointer; border:1px solid var(--line); background:#fff; border-radius:6px; padding:6px 12px; color:var(--ink); }
   button.primary { background:var(--acc); color:#fff; border-color:var(--acc); }
@@ -172,6 +172,18 @@
   .xl-sum { font-weight:500; font-size:12px; color:var(--muted); margin-left:auto; }
   .xl-tools { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
   .xl-tools button { font-size:12px; padding:4px 10px; }
+
+  /* Misch-U-Wert */
+  .misch-grid { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:18px; align-items:center; margin-top:12px; }
+  @container (max-width: 700px) { .misch-grid { grid-template-columns:1fr; } }
+  #mischSvg { width:100%; display:block; }
+  #mischSvg text { font-family:system-ui, "Segoe UI", sans-serif; }
+  .mbar-row { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) 54px; gap:8px; align-items:center; margin:7px 0; font-size:13px; }
+  .mbar-t { height:14px; background:#f1f5f9; border-radius:99px; overflow:hidden; }
+  .mbar-f { display:block; height:100%; border-radius:99px; }
+  .mbar-v { text-align:right; font-variant-numeric:tabular-nums; }
+  .mbar-row.main { font-weight:700; }
+  @media print { .misch-grid { grid-template-columns:1.1fr 1fr; } #mischCard .row button { display:none; } }
   @media print { .xl-wrap { break-inside:avoid; } .xl-tools { display:none; } }
 
   /* PDF-Auswahlfenster */
@@ -282,8 +294,8 @@
   table.lay th { white-space:normal; }
   table.lay tr > :nth-child(1) { width:34px; }  table.lay tr > :nth-child(2) { width:30%; }
   table.lay tr > :nth-child(3) { width:9%; }    table.lay tr > :nth-child(4) { width:9%; }
-  table.lay tr > :nth-child(5) { width:8%; }    table.lay tr > :nth-child(6) { width:7%; }
-  table.lay tr > :nth-child(7) { width:8%; }    table.lay tr > :nth-child(8) { width:7%; }
+  table.lay tr > :nth-child(5) { width:8%; }    table.lay tr > :nth-child(6) { width:8%; }
+  table.lay tr > :nth-child(7) { width:8%; }    table.lay tr > :nth-child(8) { width:6%; }
   table.lay tr > :nth-child(9) { width:118px; }
   .src, .note, #hBody, .srow > span { overflow-wrap:anywhere; }
   table.mini { width:100%; }
@@ -462,6 +474,17 @@
     <div class="stack" id="stack"></div>
   </div>
 
+  <div class="card" id="mischCard">
+    <h2>🪵 Misch-U-Wert – Gefach und Holz <i class="info" data-help="misch">i</i></h2>
+    <div class="row">
+      <div><label for="mb">Balken-/Sparrenbreite b [cm]</label><input id="mb" type="number" step="0.5" min="1" value="10" data-help="misch"></div>
+      <div><label for="ma">Achsabstand a [cm]</label><input id="ma" type="number" step="1" min="2" value="80" data-help="misch"></div>
+      <div><label>Holzanteil f = b / a</label><div class="kv" id="mf" style="padding:7px 0;font-size:16px">–</div></div>
+      <div style="align-self:end;flex:0 0 auto"><button id="mApply" type="button" title="Holzanteil in die Dämmschicht übernehmen">🪵 Holzanteil übernehmen</button></div>
+    </div>
+    <div id="mischBody"></div>
+  </div>
+
   <div class="card" id="cmpCard" hidden>
     <h2>⚖️ Variantenvergleich <i class="info" data-help="vergleich">i</i></h2>
     <div class="tbl"><table class="cmp" id="cmpTable"></table></div>
@@ -564,6 +587,7 @@
     <h3>🖨️ PDF erstellen</h3>
     <p class="muted" style="margin:0 0 8px">Wähle, was ins PDF soll. Danach im Druckdialog „Als PDF speichern“ wählen.</p>
     <label class="chk"><input type="checkbox" data-sec="secBauteil,secLayers,secResult" checked> Aufbau &amp; U-Wert</label>
+    <label class="chk"><input type="checkbox" data-sec="mischCard" checked> Misch-U-Wert (Gefach / Holz)</label>
     <label class="chk"><input type="checkbox" data-sec="secStd" checked> Einordnung: Baustandards &amp; Förderung</label>
     <label class="chk"><input type="checkbox" data-sec="secClima" checked> Temperaturverlauf &amp; Taupunkt</label>
     <label class="chk"><input type="checkbox" data-sec="secGlaser"> Tauwasser nach Glaser</label>
@@ -655,6 +679,8 @@ const BT_HAUS = {
     preset:[["Gipsputz",1],["Stahlbeton",20],["Alu-Dampfsperre (sd ≥ 1500 m)",0.02],["PUR/PIR WLS 024",16],["Bitumenbahn / Abdichtung",1]] },
   "Oberste Geschossdecke":             { cat:"ogd", rsi:0.10, rse:0.10,
     preset:[["Gipsputz",1],["Stahlbeton",18],["Mineralwolle WLS 035",20],["OSB-Platte",2.2]] },
+  "Holzbalkendecke mit Dämmung zwischen den Balken": { cat:"ogd", rsi:0.10, rse:0.10,
+    preset:[["Gipskartonplatte",1.25],["Dampfbremse (sd ≈ 2 m)",0.02],["Mineralwolle WLS 035",20,12.5],["Parkett / Holzdielen",2.4]] },
   "Kellerdecke (gegen unbeheizt)":     { cat:"keller", rsi:0.17, rse:0.17,
     preset:[["Parkett / Holzdielen",1.5],["Zementestrich",5],["Trittschalldämmung",3],["Stahlbeton",18],["EPS WLS 040",10]] },
   "Bodenplatte (gegen Erdreich)":      { cat:"boden", rsi:0.17, rse:0.00,
@@ -952,6 +978,13 @@ Object.assign(HELP, {
     <p>Deshalb rechnet der Glaser-Nachweis nur <b>bis zur belüfteten Luftschicht</b>. Der Klinker außen davor wird nicht angesetzt. Für den U-Wert zählt die schwach belüftete Luftschicht mit halbem Tabellenwert.</p>
     <p><b>DIN 4108-3, Abschnitt 4.3:</b> Ein- und zweischaliges Mauerwerk – auch mit Kerndämmung oder Vormauerschale – gehört zu den Bauteilen, für die <b>kein rechnerischer Tauwassernachweis</b> erforderlich ist (ausreichender Wärmeschutz nach DIN 4108-2 und luftdichte Ausführung vorausgesetzt).</p>
     <p class="muted">Achtung bei glasierten Klinkern: Sie lassen kaum Feuchte durch – Wasser kann sich dann hinter der Vormauerschale sammeln. Quellen: <a href="https://www.baunetzwissen.de/bauphysik/fachwissen/feuchteschutz/nachweisfreie-konstruktionen-des-feuchteschutzes-4828674" target="_blank" rel="noopener">BauNetz Wissen – Nachweisfreie Konstruktionen</a>, <a href="https://www.umwelt-online.de/regelwerk/cgi-bin/suchausgabe.cgi?pfad=/bau/din/4108_31.htm&amp;such=Nachweis" target="_blank" rel="noopener">DIN 4108-3 (umwelt-online)</a>, <a href="https://www.ubakus.de/kerndaemmung/" target="_blank" rel="noopener">ubakus – Kerndämmung</a>.</p>` },
+  misch: { t:"Misch-U-Wert (inhomogenes Bauteil)", s:"Gefach und Holz getrennt rechnen, dann nach Fläche mitteln: Um = f_Gefach · U_Gefach + f_Holz · U_Holz.", l:`
+    <p>Bei einer Holzbalkendecke liegt die Dämmung <b>zwischen</b> den Balken. Die Wärme hat also zwei Wege: durch das <b>Gefach</b> (Dämmung) und durch den <b>Balken</b> (Holz, λ ≈ 0,13 – leitet 3–4-mal besser als Dämmstoff).</p>
+    <ol><li>Holzanteil f<sub>Holz</sub> = b / a (Balkenbreite / Achsabstand), f<sub>Gefach</sub> = 1 − f<sub>Holz</sub></li>
+        <li>R<sub>T</sub> und U getrennt für Gefach und Holz berechnen</li>
+        <li><b>Misch-U-Wert U<sub>m</sub> = f<sub>Gefach</sub> · U<sub>Gefach</sub> + f<sub>Holz</sub> · U<sub>Holz</sub></b></li></ol>
+    <p>Das ist die übliche Rechnung im Unterricht. Sie entspricht dem <b>oberen Grenzwert R'<sub>T</sub></b> nach DIN EN ISO 6946. Die Norm nimmt als Ergebnis den Mittelwert aus oberem und unterem Grenzwert – der Rechner zeigt beide zum Vergleich. Das Hauptergebnis oben ist der Normwert.</p>
+    <p class="muted">Beispiel: Balken 10 cm breit, Achsabstand 80 cm → f<sub>Holz</sub> = 10 / 80 = 12,5 %. Mit „Holzanteil übernehmen“ wird der Wert in die Spalte „Holz %“ der Dämmschicht eingetragen.</p>` },
   kuehlklassen: { t:"Kühlraum-Richtwerte", s:"Faustwert Wärmestrom q ≤ 8 W/m² → U_max = 8 / (θ_Umgebung − θ_Zelle).", l:`
     <p>Im Kühlraumbau wird die Dämmdicke oft über den zulässigen Wärmestrom festgelegt. Ein gängiger Praxiswert ist <b>q ≤ 8 W/m²</b>:</p>
     <p>U<sub>max</sub> = 8 W/m² / (θ<sub>Umgebung</sub> − θ<sub>Zelle</sub>)</p>
@@ -979,6 +1012,7 @@ let READY = false;        // erst nach dem Start die Adresszeile aktualisieren
 let VAR_A = null;         // gemerkte Variante A für den Vergleich
 const RW_CLOSED = new Set(["Blatt 2a", "Blatt 2b", "Blatt 3", "Blatt 4"]);   // zugeklappte Rechenweg-Blätter
 let printing = false;
+let mischTouched = false;  // b/a von Hand geändert → nicht mehr aus dem Holzanteil zurückrechnen
 
 document.addEventListener("mouseup", () => { if (!dragRow) [...layers.rows].forEach(r => r.draggable = false); });
 
@@ -1063,7 +1097,7 @@ function addLayer(name = "Mineralwolle WLS 035", d = 10, w = 0) {
     <td class="num"><input class="small lam" type="number" step="any" min="0.001" data-help="lambda"></td>
     <td class="num"><input class="small mu" type="number" step="any" min="0" data-help="mu"></td>
     <td class="num"><input class="small d" type="number" step="any" min="0" value="${d}" data-help="d"></td>
-    <td class="num"><input class="small wood" type="number" step="1" min="0" max="90" value="${w || ""}" placeholder="0" data-help="holz"></td>
+    <td class="num"><input class="small wood" type="number" step="0.5" min="0" max="90" value="${w || ""}" placeholder="0" data-help="holz"></td>
     <td class="num r">–</td>
     <td class="num sd">–</td>
     <td class="acts"><button class="mv up" title="Nach innen verschieben">▲</button> <button class="mv down" title="Nach außen verschieben">▼</button> <button class="x" title="Entfernen">✕</button></td>`;
@@ -1160,6 +1194,7 @@ function inhomogeneous(L, rsi, rse) {
 
 function loadPreset() {
   layers.innerHTML = "";
+  mischTouched = false;
   BT()[$("bauteil").value].preset.forEach(([n, d, w]) => addLayer(n, d, w));
   calc();
 }
@@ -1256,6 +1291,7 @@ function calc() {
     ).join("") + `<div class="side">${M.aus}</div>`;
 
   renderStandards(u, rt, L);
+  renderMisch();
   markDrawing();
   climate(L, rsi, rse, rtG, uG);   // Temperaturen, Taupunkt, Glaser: im Gefach (ohne Holz)
   summer(L, rsi, rse, uG);
@@ -1872,6 +1908,159 @@ $("drawing").addEventListener("click", e => {
   showHelp("drawing");
 });
 
+// ================= Misch-U-Wert (Gefach / Holz) =================
+// Kleine Tabelle im Excel-Stil (Spaltenbuchstaben, Zeilennummern); Zelle = Text oder { v, s:"css", span }
+function mkXl(head, rows, opt = {}) {
+  const cls = opt.cls || head.map(() => ""), LET = "ABCDEFGHIJ";
+  let t = `<table class="xl"><colgroup><col class="xl-rn">${(opt.w || head.map(() => "")).map(w => `<col${w ? ` style="width:${w}"` : ""}>`).join("")}</colgroup>`;
+  t += `<tr class="xl-let"><th></th>${head.map((_, i) => `<th>${LET[i]}</th>`).join("")}</tr>`;
+  t += `<tr class="xl-head"><th>1</th>${head.map((h, i) => { const o = h && typeof h === "object" ? h : { v: h };
+    return `<th class="${cls[i]}" style="${o.s || opt.headStyle || ""}">${o.v}</th>`; }).join("")}</tr>`;
+  rows.forEach((r, j) => {
+    const cells = Array.isArray(r) ? r : r.c;
+    let i = 0;
+    t += `<tr class="${Array.isArray(r) ? "" : r.cls || ""}"><th>${j + 2}</th>` + cells.map(v => {
+      const o = v && typeof v === "object" ? v : { v };
+      const td = `<td class="${cls[i] || ""}"${o.span ? ` colspan="${o.span}"` : ""} style="${o.s || ""}">${o.v ?? ""}</td>`;
+      i += o.span || 1;
+      return td;
+    }).join("") + `</tr>`;
+  });
+  return t + `</table>`;
+}
+
+function renderMisch() {
+  const card = $("mischCard"), C = CALC, I = C.inh;
+  if (!C.L || (mode === "kuehl" && !I)) { card.hidden = true; return; }
+  card.hidden = false;
+  // Achsabstand aus dem eingetragenen Holzanteil zurückrechnen (solange b/a nicht von Hand geändert wurden)
+  if (I && !mischTouched && I.inh[0].f > 0 && num("mb") > 0) $("ma").value = Math.round(num("mb") / I.inh[0].f * 10) / 10;
+  const fIn = num("mb") / num("ma");
+  $("mf").innerHTML = fIn > 0 && fIn < 1 ? `<b>${fmt(fIn * 100, 1)} %</b>` : "–";
+  if (!I) {
+    $("mischBody").innerHTML = `<p class="muted" style="margin:10px 0 8px">Dieses Bauteil ist homogen – es hat keinen Holzanteil. Trage Balkenbreite und Achsabstand ein und klicke „Holzanteil übernehmen“ (wird auf die Dämmschicht gesetzt) oder lade das Beispiel:</p>
+      <button type="button" id="mEx">🪵 Beispiel Holzbalkendecke laden</button>`;
+    $("mEx").addEventListener("click", () => {
+      if (mode !== "haus") setMode("haus");
+      $("bauteil").value = "Holzbalkendecke mit Dämmung zwischen den Balken"; setBauteil(); loadPreset();
+    });
+    return;
+  }
+  const fx = (x, n = 4) => Number.isFinite(x) ? x.toLocaleString("de-DE", { maximumFractionDigits:n }) : "–";
+  const secs = I.sections, single = I.inh.length === 1;
+  const nameOf = s => single ? (s.wood[0] ? "Holz" : "Gefach") : s.wood.map(w => w ? "Holz" : "Gefach").join(" / ");
+  const colOf = s => s.wood.some(w => w) ? "#caa472" : MAT[I.inh[0].name].c;
+  const tint = s => `background:color-mix(in srgb, ${colOf(s)} 22%, white)`;
+  const Um = 1 / I.rUp, Uiso = C.u, uLo = 1 / I.rLo;
+
+  // Balkenvergleich
+  const umax = Math.max(...secs.map(s => 1 / s.R), Uiso);
+  const bar = (label, u, col, main) => `<div class="mbar-row${main ? " main" : ""}"><span>${label}</span><span class="mbar-t"><span class="mbar-f" style="width:${Math.max(3, u / umax * 100)}%;background:${col}"></span></span><b class="mbar-v">${fmt(u, 3)}</b></div>`;
+  let st = `<div class="kv" style="margin-bottom:4px">U-Werte in W/(m²K):</div>`;
+  st += secs.map(s => bar(`U ${nameOf(s)} <span class="muted">(${fmt(s.fa * 100, 1)} % der Fläche)</span>`, 1 / s.R, colOf(s) === "#caa472" ? "#b45309" : "#eab308")).join("");
+  st += bar("Misch-U-Wert U<sub>m</sub> = Σ f · U", Um, "#7c3aed", true);
+  st += bar("DIN EN ISO 6946 (Ergebnis oben)", Uiso, "#2563eb", true);
+  st += `<p class="muted" style="margin:8px 0 0">Durch das Holz ist der U-Wert <b>${fmt((Uiso / C.uG - 1) * 100, 0)} % schlechter</b> als im reinen Gefach. Der einfache Mischwert liegt ${fmt(Math.abs(Uiso - Um) / Uiso * 100, 1)} % unter dem Normwert.</p>`;
+
+  // Excel-Tabelle: klassischer Schul-Rechenweg
+  const head = ["Schicht", "d [m]", ...secs.map(s => ({ v: `${nameOf(s)}<br><small>R [m²K/W]</small>`, s: `background:color-mix(in srgb, ${colOf(s)} 45%, white)` }))];
+  const rows = [["Übergang innen R<sub>si</sub>", "", ...secs.map(() => fmt(C.rsi, 3))]];
+  C.L.forEach(l => {
+    if (l.d <= 0) return;
+    const j = I.inh.indexOf(l);
+    rows.push([`<span class="sw" style="background:${MAT[l.name].c};margin-right:5px;vertical-align:-2px"></span>${l.name}` +
+               (j >= 0 ? `<span class="calc">Gefach λ = ${fmt(l.l, 3)} · Holz λ = 0,13 W/(mK)</span>` : ""),
+      fx(l.d / 100), ...secs.map(s => j >= 0 ? { v: fmt(s.wood[j] ? l.Rw : l.R, 3), s: tint(s) } : fmt(l.R, 3))]);
+  });
+  rows.push(["Übergang außen R<sub>se</sub>", "", ...secs.map(() => fmt(C.rse, 3))]);
+  rows.push({ c: ["R<sub>T,j</sub> = Summe", fx(C.L.reduce((a, l) => a + l.d, 0) / 100), ...secs.map(s => fmt(s.R, 3))], cls: "sum" });
+  rows.push(["U<sub>j</sub> = 1 / R<sub>T,j</sub>", "", ...secs.map(s => ({ v: `<b>${fmt(1 / s.R, 3)}</b>`, s: tint(s) }))]);
+  rows.push(["Flächenanteil f<sub>j</sub>", "", ...secs.map(s => fmt(s.fa * 100, 1) + " %")]);
+  rows.push(["f<sub>j</sub> · U<sub>j</sub>", "", ...secs.map(s => fx(s.fa / s.R, 4))]);
+  rows.push({ c: ["Misch-U-Wert U<sub>m</sub> = Σ f<sub>j</sub> · U<sub>j</sub>", "",
+    { v: `<b>${fmt(Um, 3)} W/(m²K)</b><span class="calc">${secs.map(s => fx(s.fa / s.R, 4)).join(" + ")}</span>`, span: secs.length, s: "background:#ede9fe" }], cls: "sum" });
+  const vw = secs.length ? `${Math.floor(50 / secs.length)}%` : "";
+
+  // Methodenvergleich
+  const cmp = [
+    ["Nur Gefach (Holz ignoriert)", fmt(C.rtG, 3), fmt(C.uG, 3), `${fmt((C.uG / Uiso - 1) * 100, 1)} %`],
+    ["Misch-U-Wert = oberer Grenzwert R'<sub>T</sub>", fmt(I.rUp, 3), fmt(Um, 3), `${fmt((Um / Uiso - 1) * 100, 1)} %`],
+    ["Unterer Grenzwert R''<sub>T</sub>", fmt(I.rLo, 3), fmt(uLo, 3), `${fmt((uLo / Uiso - 1) * 100, 1)} %`],
+    { c: ["DIN EN ISO 6946: R<sub>T</sub> = (R'<sub>T</sub> + R''<sub>T</sub>) / 2", fmt(I.rt, 3), { v: `<b>${fmt(Uiso, 3)}</b>`, s: "background:#dbeafe" }, "Ergebnis"], cls: "sum" }];
+
+  $("mischBody").innerHTML =
+    `<div class="misch-grid"><div><svg id="mischSvg" viewBox="0 0 440 260"></svg></div><div>${st}</div></div>` +
+    `<div class="xl-wrap"><div class="xl-title" style="border-color:#8b5a2b">Tabelle – Misch-U-Wert (Gefach und Holz getrennt, flächengewichtet)</div>` +
+    mkXl(head, rows, { cls: ["", "n", ...secs.map(() => "n")], w: ["36%", "12%", ...secs.map(() => vw)] }) +
+    `<div class="xl-note">C${secs.length > 1 ? "–" + "ABCDEFGHIJ"[secs.length + 1] : ""}: Wärmedurchlasswiderstand je Bereich, im Holzbereich d / 0,13 · U<sub>j</sub> = 1 / R<sub>T,j</sub> · U<sub>m</sub> = Σ f<sub>j</sub> · U<sub>j</sub></div></div>` +
+    `<div class="xl-wrap"><div class="xl-title" style="border-color:#2563eb">Vergleich der Rechenwege</div>` +
+    mkXl(["Methode", "R<sub>T</sub> [m²K/W]", "U [W/(m²K)]", "Abweichung zum Normwert"], cmp, { cls: ["", "n", "n", "n"], w: ["46%", "17%", "17%", "20%"], headStyle: "background:#dbeafe" }) +
+    `<div class="xl-note">Der Misch-U-Wert (übliche Schulrechnung) ist etwas zu günstig, weil er seitliche Wärmeströme zwischen Gefach und Holz vernachlässigt. Die Norm mittelt deshalb oberen und unteren Grenzwert.</div></div>`;
+  drawMisch();
+}
+
+// Schnittzeichnung: zwei Felder mit Balken, Schichten maßstäblich, Wärmestrom-Pfeile ∝ U
+function drawMisch() {
+  const svg = $("mischSvg"); if (!svg) return;
+  const C = CALC, I = C.inh;
+  const W = Math.round(Math.max(290, Math.min(520, svg.parentElement.clientWidth || 440))), H = 268;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const Ls = C.L.filter(l => l.d > 0), tot = Ls.reduce((a, l) => a + l.d, 0);
+  const top = 44, bot = 62, x0 = 12, x1 = W - 12, aPx = (x1 - x0) / 2, avail = H - top - bot;
+  let hs = Ls.map(l => Math.max(5, l.d / tot * avail));
+  const k = avail / hs.reduce((a, b) => a + b, 0); hs = hs.map(h => h * k);
+  const WOOD = "#caa472";
+  let s = `<defs>
+    <marker id="mArrH" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+    <marker id="mArrG" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker></defs>`;
+  let y = H - bot;
+  Ls.forEach((l, i) => {
+    const h = hs[i]; y -= h;
+    s += `<rect x="${x0}" y="${y}" width="${x1 - x0}" height="${h}" fill="${l.c}" stroke="#0003"><title>${l.name}, ${fmt(l.d, 1)} cm</title></rect>`;
+    if (I.inh.includes(l)) {
+      const bPx = l.f * aPx;
+      [0.5, 1.5].forEach(c => {
+        const bx = x0 + c * aPx - bPx / 2;
+        s += `<rect x="${bx}" y="${y}" width="${bPx}" height="${h}" fill="${WOOD}" stroke="#8b5a2b"><title>Holz (Balken/Sparren), ${fmt(l.f * 100, 1)} %</title></rect>`;
+        for (let g = 1; g < 5; g++) s += `<path d="M${bx + 2},${y + h * g / 5} q${bPx / 4},-3 ${bPx / 2},0 t${bPx / 2 - 4},0" fill="none" stroke="#8b5a2b66"/>`;
+      });
+      // Beschriftung „Gefach“/„Holz“ steht über den Pfeilen, nicht in der Schicht (würde vom Pfeil verdeckt)
+    }
+  });
+  // Wärmestrom-Pfeile: Dicke ∝ U
+  const gef = I.sections.find(x => !x.wood.some(w => w)), holz = I.sections.find(x => x.wood.every(w => w));
+  const ug = 1 / gef.R, uh = 1 / holz.R, umax = Math.max(ug, uh);
+  const arrow = (x, u, col, mk, label) =>
+    `<line x1="${x}" x2="${x}" y1="${H - bot + 6}" y2="${top - 4}" stroke="${col}" stroke-width="${2 + 12 * u / umax}" stroke-linecap="round" opacity=".85" marker-end="url(#${mk})"/>` +
+    `<text x="${x}" y="${top - 26}" text-anchor="middle" font-size="12" font-weight="700" fill="${col}">${label}</text>` +
+    `<text x="${x}" y="${top - 12}" text-anchor="middle" font-size="11" fill="${col}">U = ${fmt(u, 3)}</text>`;
+  s += arrow(x0 + aPx, ug, "#f59e0b", "mArrG", "Gefach") + arrow(x0 + 1.5 * aPx, uh, "#dc2626", "mArrH", "Holz");
+  s += `<text x="${x0 + 2}" y="14" font-size="11" fill="#6b7280">${MODES[mode].aus} (kalt)</text>`;
+  s += `<text x="${x0 + 2}" y="${H - bot + 16}" font-size="11" fill="#6b7280">${MODES[mode].inn} (warm)</text>`;
+  // Bemaßung a (Achsabstand) zwischen den Balkenmitten
+  const ya = H - bot + 30, xa1 = x0 + 0.5 * aPx, xa2 = x0 + 1.5 * aPx;
+  s += `<line x1="${xa1}" x2="${xa2}" y1="${ya}" y2="${ya}" stroke="#374151"/><line x1="${xa1}" x2="${xa1}" y1="${ya - 5}" y2="${ya + 5}" stroke="#374151"/><line x1="${xa2}" x2="${xa2}" y1="${ya - 5}" y2="${ya + 5}" stroke="#374151"/>`;
+  s += `<text x="${(xa1 + xa2) / 2}" y="${ya - 4}" text-anchor="middle" font-size="11" fill="#374151">a = ${fmt(num("ma"), 1)} cm</text>`;
+  s += `<text x="${W / 2}" y="${H - 8}" text-anchor="middle" font-size="11" fill="#374151">Holz b = ${fmt(num("mb"), 1)} cm · Holzanteil f = ${fmt(I.inh[0].f * 100, 1)} % · Gefach ${fmt((1 - I.inh[0].f) * 100, 1)} %</text>`;
+  svg.innerHTML = s;
+}
+
+["mb", "ma"].forEach(id => $(id).addEventListener("input", () => { mischTouched = true; renderMisch(); }));
+$("mApply").addEventListener("click", () => {
+  const f = num("mb") / num("ma");
+  if (!(f > 0 && f < 0.9)) { toast("Bitte Balkenbreite b und Achsabstand a so eingeben, dass b kleiner als a ist."); return; }
+  let target = [...layers.rows].filter(tr => (parseFloat(tr.querySelector(".wood").value) || 0) > 0);
+  if (!target.length) {
+    const ins = readLayers().filter(l => l.l > 0 && l.l < 0.1).sort((a, b) => b.R - a.R)[0];
+    if (ins) target = [ins.tr];
+  }
+  if (!target.length) { toast("Keine Dämmschicht gefunden – trage den Holzanteil direkt in der Spalte „Holz %“ ein."); return; }
+  target.forEach(tr => tr.querySelector(".wood").value = Math.round(f * 1000) / 10);
+  mischTouched = true;
+  calc();
+  toast(`🪵 Holzanteil ${fmt(f * 100, 1)} % übernommen.`);
+});
+
 // ================= Kurzer Teilen-Link =================
 // Format: modus_bauteil_schichten_rsi_rse_θi_φi_θe_φe_tage  (leere Felder = Standardwert)
 // Schicht: id~d·100~holz%~λ·10000~μ·10 (λ, μ nur wenn vom Standard abweichend), Schichten mit "." getrennt
@@ -1887,7 +2076,8 @@ function encodeState() {
     const n = tr.dataset.mat, m = MAT[n];
     const l = parseFloat(tr.querySelector(".lam").value), mu = parseFloat(tr.querySelector(".mu").value);
     const d = parseFloat(tr.querySelector(".d").value) || 0, w = parseFloat(tr.querySelector(".wood").value) || 0;
-    const f = [mid(n), i(d, 100), w ? i(w, 1) : "",
+    // Holz %: ganze Zahl wie bisher, mit Nachkommastelle als „t“ + Zehntel (z. B. t125 = 12,5 %)
+    const f = [mid(n), i(d, 100), w ? (Number.isInteger(w) ? i(w, 1) : "t" + i(w, 10)) : "",
       m.air || (m.l !== null && Math.abs(l - m.l) < 1e-9) ? "" : i(l, 10000),
       m.mu !== null && Math.abs(mu - m.mu) < 1e-9 ? "" : i(mu, 10)];
     while (f.length > 2 && f[f.length - 1] === "") f.pop();
@@ -1917,7 +2107,7 @@ function applyState(code) {
     (p[2] || "").split(".").filter(Boolean).forEach(ls => {
       const f = ls.split("~"), name = MAT_BY_ID[f[0]];
       if (!name) return;
-      addLayer(name, parseInt(f[1] || "0", 10) / 100, f[2] ? parseInt(f[2], 10) : 0);
+      addLayer(name, parseInt(f[1] || "0", 10) / 100, f[2] ? (f[2][0] === "t" ? parseInt(f[2].slice(1), 10) / 10 : parseInt(f[2], 10)) : 0);
       const tr = layers.rows[layers.rows.length - 1];
       if (f[3]) tr.querySelector(".lam").value = parseInt(f[3], 10) / 10000;
       if (f[4]) tr.querySelector(".mu").value = parseInt(f[4], 10) / 10;
