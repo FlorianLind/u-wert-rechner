@@ -81,8 +81,9 @@
 
   /* Baustoff-Auswahl */
   .matbtn { width:100%; min-width:0; display:flex; align-items:center; gap:8px; text-align:left; padding:6px 8px; }
-  .matbtn .mn { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .matbtn .car { color:var(--muted); }
+  .matbtn { overflow:hidden; }
+  .matbtn .mn { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }   /* min-width:0 → Name kürzt mit „…“ statt den Pfeil hinauszuschieben */
+  .matbtn .car { color:var(--muted); flex:none; }
   .sw { width:14px; height:14px; border-radius:3px; border:1px solid #0003; flex:none; display:inline-block; }
   #picker { position:absolute; z-index:50; width:440px; max-width:calc(100vw - 16px); background:#fff; border:1px solid var(--line);
             border-radius:10px; box-shadow:0 12px 32px #0003; padding:8px; }
